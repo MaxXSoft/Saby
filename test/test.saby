@@ -8,7 +8,6 @@ function test = (number a, float b) => void {
         print("test")
         return
     }
-    
     else {
         print(a + b)
     }
