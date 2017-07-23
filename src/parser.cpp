@@ -102,6 +102,11 @@ ASTPtr Parser::ParseFunctionDef() {
     }
 
     if (NextToken() != kOperator || lexer_.op_val() != kRtn) {
+        if (cur_token_ == '{') {
+            auto body = ParseBlock();
+            if (!body) return nullptr;
+            return std::make_unique<FunctionAST>(std::move(args), kVoid, std::move(body));
+        }
         return PrintError("expected '=>' operator");
     }
     if (NextToken() != kKeyword) return PrintError("expected type");
