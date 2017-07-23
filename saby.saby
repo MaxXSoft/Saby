@@ -1,0 +1,35 @@
+# Saby
+
+# Symbol Table: (caller, var1, var2, ...)
+# Keywords: (number, float, function, string, list, void), import, export, asm, if, else, return, while, break, continue
+# Operators: &, ^, |, ~, <<, >>, +, -, *, /, (-), %, **, ++, --, <, >, <=, >=, ==, !=, =>, @, =
+
+import std
+
+function Fib = (number pos) => number {
+    if pos <= 2 {
+        return 1
+    }
+    else {
+        return Fib(pos - 1) + Fib(pos - 2)
+    }
+}
+
+function TestFunc = (float var1, function var2) => function {
+    number var3 = var2((number)var1 * 10), var4 = 0
+    while ++var4 != var3 {
+        var3 += var4
+    }
+    return (string str) => string { return (string)var1 + " " + (string)var3 }
+}
+
+print(Fib(10))
+
+print(TestFunc(1.23, (number num) => number {
+    if num < 10 {
+        return num + 10
+    }
+    else {
+        return @(num - 1) * @(num / 2)
+    }
+})("test test"))
