@@ -2,121 +2,122 @@
 
 #include <iostream>
 
-int IdentifierAST::CodeGen() {
+int IdentifierAST::CodeGen(EnvPtr &env) {
     std::cout << "IdentifierAST(" << id_ << ", " << type_ << ")";
+    
     return 0;
 }
 
-int VariableAST::CodeGen() {
+int VariableAST::CodeGen(EnvPtr &env) {
     std::cout << "VariableAST(";
-    if (definition_) definition_->CodeGen();
+    if (definition_) definition_->CodeGen(env);
     std::cout << ", ";
-    if (next_def_) next_def_->CodeGen();
+    if (next_def_) next_def_->CodeGen(env);
     std::cout << ", " << type_ << ")";
     return 0;
 }
 
-int NumberAST::CodeGen() {
+int NumberAST::CodeGen(EnvPtr &env) {
     std::cout << "NumberAST(" << value_ << ")";
     return 0;
 }
 
-int DecimalAST::CodeGen() {
+int DecimalAST::CodeGen(EnvPtr &env) {
     std::cout << "DecimalAST(" << value_ << ")";
     return 0;
 }
 
-int StringAST::CodeGen() {
+int StringAST::CodeGen(EnvPtr &env) {
     std::cout << "StringAST(" << str_ << ")";
     return 0;
 }
 
-int BinaryExpressionAST::CodeGen() {
+int BinaryExpressionAST::CodeGen(EnvPtr &env) {
     std::cout << "BinaryExpressionAST(" << operator_id_;
     std::cout << ", ";
-    if (lhs_) lhs_->CodeGen();
+    if (lhs_) lhs_->CodeGen(env);
     std::cout << ", ";
-    if (rhs_) rhs_->CodeGen();
+    if (rhs_) rhs_->CodeGen(env);
     std::cout << ")";
     return 0;
 }
 
-int UnaryExpressionAST::CodeGen() {
+int UnaryExpressionAST::CodeGen(EnvPtr &env) {
     std::cout << "UnaryExpressionAST(" << operator_id_;
     std::cout << ", ";
-    if (operand_) operand_->CodeGen();
+    if (operand_) operand_->CodeGen(env);
     std::cout << ")";
     return 0;
 }
 
-int CallAST::CodeGen() {
+int CallAST::CodeGen(EnvPtr &env) {
 	std::cout << "CallAST(";
-	callee_->CodeGen();
+	callee_->CodeGen(env);
 	std::cout << ", ";
     for (const auto &i : args_) {
-        if (i) i->CodeGen();
+        if (i) i->CodeGen(env);
         std::cout << ". ";
     }
     std::cout << ")";
     return 0;
 }
 
-int BlockAST::CodeGen() {
+int BlockAST::CodeGen(EnvPtr &env) {
     std::cout << "{";
     for (const auto &i : expr_list_) {
-        if (i) i->CodeGen();
+        if (i) i->CodeGen(env);
         std::cout << "; ";
     }
     std::cout << "}";
     return 0;
 }
 
-int FunctionAST::CodeGen() {
+int FunctionAST::CodeGen(EnvPtr &env) {
     std::cout << "FunctionAST(";
     for (const auto &i : args_) {
-        if (i) i->CodeGen();
+        if (i) i->CodeGen(env);
         std::cout << ". ";
     }
 	std::cout << ", ";
 	std::cout << return_type_ << ", ";
-    if (body_) body_->CodeGen();
+    if (body_) body_->CodeGen(env);
     std::cout << ")";
     return 0;
 }
 
-int AsmAST::CodeGen() {
+int AsmAST::CodeGen(EnvPtr &env) {
     std::cout << "AsmAST(" << asm_str_ << ")";
     return 0;
 }
 
-int IfAST::CodeGen() {
+int IfAST::CodeGen(EnvPtr &env) {
     std::cout << "IfAST(";
-    if (cond_) cond_->CodeGen();
+    if (cond_) cond_->CodeGen(env);
     std::cout << ", ";
-    if (then_) then_->CodeGen();
+    if (then_) then_->CodeGen(env);
     std::cout << ", ";
-    if (else_then_) else_then_->CodeGen();
+    if (else_then_) else_then_->CodeGen(env);
     std::cout << ")";
     return 0;
 }
 
-int WhileAST::CodeGen() {
+int WhileAST::CodeGen(EnvPtr &env) {
     std::cout << "WhileAST(";
-    if (cond_) cond_->CodeGen();
+    if (cond_) cond_->CodeGen(env);
     std::cout << ", ";
-    if (body_) body_->CodeGen();
+    if (body_) body_->CodeGen(env);
     std::cout << ")";
     return 0;
 }
 
-int ControlFlowAST::CodeGen() {
+int ControlFlowAST::CodeGen(EnvPtr &env) {
     std::cout << "ControlFlowAST(" << type_ << ")";
     return 0;
 }
 
-int SingleWordAST::CodeGen() {
+int SingleWordAST::CodeGen(EnvPtr &env) {
     std::cout << "SingleWordAST(" << type_ << ", ";
-    if (value_) value_->CodeGen();
+    if (value_) value_->CodeGen(env);
     std::cout << ")";
     return 0;
 }

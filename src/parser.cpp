@@ -83,21 +83,23 @@ ASTPtr Parser::ParseVarDefinition(int type) {
 
 ASTPtr Parser::ParseFunctionDef() {
     ASTPtrList args;
-    for (;;) {
-        auto arg_type = lexer_.key_val();
-        if (arg_type < kNumber || arg_type > kList) {
-            return PrintError("illegal argument type");
-        }
-        args.push_back(std::make_unique<IdentifierAST>(lexer_.id_val(), arg_type));
+    if (cur_token_ != ')') {
+        for (;;) {
+            auto arg_type = lexer_.key_val();
+            if (arg_type < kNumber || arg_type > kList) {
+                return PrintError("illegal argument type");
+            }
+            args.push_back(std::make_unique<IdentifierAST>(lexer_.id_val(), arg_type));
 
-        NextToken();
-        if (cur_token_ == ')') break;
-        if (cur_token_ != ',') {
-            return PrintError("expected ')' or  ',' in argument list");
-        }
+            NextToken();
+            if (cur_token_ == ')') break;
+            if (cur_token_ != ',') {
+                return PrintError("expected ')' or  ',' in argument list");
+            }
 
-        if (NextToken() != kKeyword || NextToken() != kId) {
-            return PrintError("invalid argument list");
+            if (NextToken() != kKeyword || NextToken() != kId) {
+                return PrintError("invalid argument list");
+            }
         }
     }
 
@@ -260,6 +262,7 @@ ASTPtr Parser::ParseBracket() {
         if (cur_token_ == ')') return ParseTypeConv();
         return PrintError("illegal bracket expression");
     }
+    if (cur_token_ == ')') return ParseFunctionDef();
 
     auto expr = ParseExpression();
     if (!expr) return nullptr;

@@ -7,7 +7,7 @@ function test = (number a) => void {
     print(a)
 }
 
-function test2 = (number a) {
+function test2 = () {
     print(a)
 }
 
