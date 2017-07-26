@@ -2,10 +2,14 @@
 
 #include <iostream>
 
+namespace {
+
+//
+
+} // namespace
+
 int IdentifierAST::CodeGen(EnvPtr &env) {
     std::cout << "IdentifierAST(" << id_ << ", " << type_ << ")";
-    
-    return 0;
 }
 
 int VariableAST::CodeGen(EnvPtr &env) {

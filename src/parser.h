@@ -9,8 +9,12 @@ public:
     Parser(Lexer &lexer) : lexer_(lexer), cur_token_(0) {
         NextToken();
     }
+    ~Parser() {}
 
     ASTPtr ParseNext() { return ParseExpression(); }
+
+    unsigned int line_pos() const { return lexer_.line_pos(); }
+    unsigned int error_num() const { return error_num_; }
 
 private:
     int NextToken() { return cur_token_ = lexer_.NextToken(); }

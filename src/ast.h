@@ -12,7 +12,7 @@ class ExpressionAST {
 public:
     virtual ~ExpressionAST() = default;
 
-    virtual int CodeGen(EnvPtr &env) = 0;
+    virtual int CodeGen(EnvPtr &env) = 0;   // TODO: env??
 };
 
 using ASTPtr = std::unique_ptr<ExpressionAST>;

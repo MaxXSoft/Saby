@@ -1,5 +1,6 @@
 #include "parser.h"
 
+#include <cstdio>
 #include <sstream>
 
 ASTPtr Parser::PrintError(const char *description) {
