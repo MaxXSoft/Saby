@@ -4,58 +4,62 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <utility>
+#include <vector>
 
-struct SymbolValue {
-    long long num;
-    double dec;
-    std::string str;
-};
-
-class Symbol {
-public:
-    Symbol(int type, const SymbolValue &value)
-            : type_(type), value_(value) {}
-    ~Symbol() {}
-
-    const int type() const { return type_; }
-    const SymbolValue &value() const { return value_; }
-
-    void set_type(int type) { type_ = type; }
-    void set_value(const SymbolValue &value) { value_ = value; }
-
-private:
-    int type_;
-    SymbolValue value_;
-};
+using TypeValue = long long;
+constexpr TypeValue kTypeError = -1;
 
 class Environment;
 using EnvPtr = std::shared_ptr<Environment>;
-using SymbolHash = std::map<std::string, Symbol>;
+using SymbolHash = std::map<std::string, TypeValue>;
+
+inline EnvPtr MakeEnvironment(EnvPtr outer) {
+    return std::make_shared<Environment>(outer);
+}
 
 class Environment {
 public:
-
     Environment(EnvPtr outer) : outer_(outer) {}
     ~Environment() {}
 
-    void Insert(const std::string &id, const Symbol &&symbol) {
-        table_.insert(SymbolHash::value_type(id, symbol));
+    void Insert(const std::string &id, TypeValue type) {
+        table_.insert(SymbolHash::value_type(id, type));
     }
 
-    int Count(const std::string &id) {
-        return (outer_ != nullptr ? outer_->Count(id) : 0) + table_.count(id);
+    TypeValue GetType(const std::string &id, bool recursive = true) {
+        auto sym = table_.find(id);
+        if (sym != table_.end()) {
+            return sym->second;
+        }
+        else {
+            if (!recursive) return kTypeError;
+            if (outer_ != nullptr) {
+                return outer_->GetType(id);
+            }
+            else {
+                return kTypeError;
+            }
+        }
+    }
+
+    void SetType(const std::string &id, TypeValue type) {
+        auto sym = table_.find(id);
+        if (sym != table_.end()) {
+            sym->second = type;
+        }
+        else {
+            if (outer_ != nullptr) {
+                outer_->SetType(id, type);
+            }
+        }
     }
 
     const EnvPtr &outer() const { return outer_; }
-    const SymbolHash &table() const { return table_; }
 
 private:
     EnvPtr outer_;
     SymbolHash table_;
 };
-
-inline EnvPtr MakeEnvironment(EnvPtr outer) {
-    return std::make_shared<Environment>(outer);
-}
 
 #endif // SABY_SYMBOL_H_

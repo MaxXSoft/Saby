@@ -8,7 +8,7 @@
 namespace {
 
 const char *keyword_str[] = {
-    "number", "float", "function", "string", "list", "void",
+    "number", "float", "function", "string", "list", "void", "var",
     "import", "export", "asm",
     "if", "else",
     "return",

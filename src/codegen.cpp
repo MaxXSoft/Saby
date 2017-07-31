@@ -8,120 +8,128 @@ namespace {
 
 } // namespace
 
-int IdentifierAST::CodeGen(EnvPtr &env) {
+int IdentifierAST::CodeGen() {
     std::cout << "IdentifierAST(" << id_ << ", " << type_ << ")";
+    return 0;
 }
 
-int VariableAST::CodeGen(EnvPtr &env) {
+int VariableAST::CodeGen() {
     std::cout << "VariableAST(";
-    if (definition_) definition_->CodeGen(env);
-    std::cout << ", ";
-    if (next_def_) next_def_->CodeGen(env);
+    for (const auto &i : defs_) {
+        std::cout << "(" << i.first << ", ";
+        i.second->CodeGen();
+        std::cout << "). ";
+    }
     std::cout << ", " << type_ << ")";
     return 0;
 }
 
-int NumberAST::CodeGen(EnvPtr &env) {
+int NumberAST::CodeGen() {
     std::cout << "NumberAST(" << value_ << ")";
     return 0;
 }
 
-int DecimalAST::CodeGen(EnvPtr &env) {
+int DecimalAST::CodeGen() {
     std::cout << "DecimalAST(" << value_ << ")";
     return 0;
 }
 
-int StringAST::CodeGen(EnvPtr &env) {
+int StringAST::CodeGen() {
     std::cout << "StringAST(" << str_ << ")";
     return 0;
 }
 
-int BinaryExpressionAST::CodeGen(EnvPtr &env) {
+int BinaryExpressionAST::CodeGen() {
     std::cout << "BinaryExpressionAST(" << operator_id_;
     std::cout << ", ";
-    if (lhs_) lhs_->CodeGen(env);
+    if (lhs_) lhs_->CodeGen();
     std::cout << ", ";
-    if (rhs_) rhs_->CodeGen(env);
+    if (rhs_) rhs_->CodeGen();
     std::cout << ")";
     return 0;
 }
 
-int UnaryExpressionAST::CodeGen(EnvPtr &env) {
+int UnaryExpressionAST::CodeGen() {
     std::cout << "UnaryExpressionAST(" << operator_id_;
     std::cout << ", ";
-    if (operand_) operand_->CodeGen(env);
+    if (operand_) operand_->CodeGen();
     std::cout << ")";
     return 0;
 }
 
-int CallAST::CodeGen(EnvPtr &env) {
+int CallAST::CodeGen() {
 	std::cout << "CallAST(";
-	callee_->CodeGen(env);
+	callee_->CodeGen();
 	std::cout << ", ";
     for (const auto &i : args_) {
-        if (i) i->CodeGen(env);
+        if (i) i->CodeGen();
         std::cout << ". ";
     }
     std::cout << ")";
     return 0;
 }
 
-int BlockAST::CodeGen(EnvPtr &env) {
+int BlockAST::CodeGen() {
     std::cout << "{";
     for (const auto &i : expr_list_) {
-        if (i) i->CodeGen(env);
+        if (i) i->CodeGen();
         std::cout << "; ";
     }
     std::cout << "}";
     return 0;
 }
 
-int FunctionAST::CodeGen(EnvPtr &env) {
+int FunctionAST::CodeGen() {
     std::cout << "FunctionAST(";
     for (const auto &i : args_) {
-        if (i) i->CodeGen(env);
+        if (i) i->CodeGen();
         std::cout << ". ";
     }
 	std::cout << ", ";
 	std::cout << return_type_ << ", ";
-    if (body_) body_->CodeGen(env);
+    if (body_) body_->CodeGen();
     std::cout << ")";
     return 0;
 }
 
-int AsmAST::CodeGen(EnvPtr &env) {
+int AsmAST::CodeGen() {
     std::cout << "AsmAST(" << asm_str_ << ")";
     return 0;
 }
 
-int IfAST::CodeGen(EnvPtr &env) {
+int IfAST::CodeGen() {
     std::cout << "IfAST(";
-    if (cond_) cond_->CodeGen(env);
+    if (cond_) cond_->CodeGen();
     std::cout << ", ";
-    if (then_) then_->CodeGen(env);
+    if (then_) then_->CodeGen();
     std::cout << ", ";
-    if (else_then_) else_then_->CodeGen(env);
+    if (else_then_) else_then_->CodeGen();
     std::cout << ")";
     return 0;
 }
 
-int WhileAST::CodeGen(EnvPtr &env) {
+int WhileAST::CodeGen() {
     std::cout << "WhileAST(";
-    if (cond_) cond_->CodeGen(env);
+    if (cond_) cond_->CodeGen();
     std::cout << ", ";
-    if (body_) body_->CodeGen(env);
+    if (body_) body_->CodeGen();
     std::cout << ")";
     return 0;
 }
 
-int ControlFlowAST::CodeGen(EnvPtr &env) {
-    std::cout << "ControlFlowAST(" << type_ << ")";
+int ControlFlowAST::CodeGen() {
+    std::cout << "ControlFlowAST(" << type_ << ", ";
+    if (value_) value_->CodeGen();
+    std::cout << ")";
     return 0;
 }
 
-int SingleWordAST::CodeGen(EnvPtr &env) {
-    std::cout << "SingleWordAST(" << type_ << ", ";
-    if (value_) value_->CodeGen(env);
+int ExternalAST::CodeGen() {
+    std::cout << "ExternalAST(" << type_ << ", ";
+    for (const auto &i : libs_) {
+        i->CodeGen();
+        std::cout << ". ";
+    }
     std::cout << ")";
     return 0;
 }

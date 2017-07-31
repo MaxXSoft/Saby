@@ -13,7 +13,7 @@ enum Token {
 };
 
 enum Keyword {
-    kNumber, kFloat, kFunction, kString, kList, kVoid,
+    kNumber, kFloat, kFunction, kString, kList, kVoid, kVar,
     kImport, kExport, kAsm,
     kIf, kElse,
     kReturn,

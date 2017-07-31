@@ -1,6 +1,8 @@
 #ifndef SABY_PARSER_H_
 #define SABY_PARSER_H_
 
+class Parser;
+
 #include "lexer.h"
 #include "ast.h"
 
@@ -32,7 +34,7 @@ private:
     ASTPtr ParseAsm();
     ASTPtr ParseIf();
     ASTPtr ParseWhile();
-    ASTPtr ParseSingleWord();
+    ASTPtr ParseExternal();
     ASTPtr ParseControlFlow();
     ASTPtr ParseId();
     ASTPtr ParseBracket();

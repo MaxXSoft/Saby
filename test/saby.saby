@@ -1,8 +1,13 @@
 # Saby
 
-# Symbol Table: (caller, var1, var2, ...)
-# Keywords: (number, float, function, string, list, void), import, export, asm, if, else, return, while, break, continue
-# Operators: &, ^, |, ~, <<, >>, +, -, *, /, (-), %, **, ++, --, <, >, <=, >=, ==, !=, =>, @, =
+# Keywords:
+#   (number, float, function, string, list, void, var),
+#   import, export, asm, if, else, return, while, break, continue
+
+# Operators:
+#   &, ^, |, ~, <<, >>,
+#   +, -, *, /, (-), %, **, ++, --,
+#   <, >, <=, >=, ==, !=, =>, @, =
 
 import std
 
@@ -20,7 +25,9 @@ function TestFunc = (float var1, function var2) => function {
     while ++var4 != var3 {
         var3 += var4
     }
-    return (string str) => string { return (string)var1 + " " + (string)var3 }
+    return (string str) => string {
+        return (string)var1 + " " + (string)var3
+    }
 }
 
 print(Fib(10))

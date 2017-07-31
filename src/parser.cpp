@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <sstream>
+#include <utility>
 
 ASTPtr Parser::PrintError(const char *description) {
     fprintf(stderr, "\033[1mparser\033[0m(line %u): \033[31m\033[1merror:\033[0m %s\n", lexer_.line_pos(), description);
@@ -36,7 +37,7 @@ ASTPtr Parser::ParseBinaryExpression(int op_prec, ASTPtr lhs) {
         auto op_val = lexer_.op_val();
         NextToken();
 
-        auto rhs = ParseUnaryExpression();   // TODO: test required
+        auto rhs = ParseUnaryExpression();
         if (!rhs) return nullptr;
 
         if (cur_op_prec < lexer_.op_prec()) {
@@ -48,7 +49,7 @@ ASTPtr Parser::ParseBinaryExpression(int op_prec, ASTPtr lhs) {
     }
 }
 
-ASTPtr Parser::ParseUnaryExpression() {   // TODO: '@' operator
+ASTPtr Parser::ParseUnaryExpression() {
     if (cur_token_ != kOperator) return ParsePrimary();
     auto op_val = lexer_.op_val();
     NextToken();
@@ -73,13 +74,25 @@ ASTPtr Parser::ParseTypeConv() {
 }
 
 ASTPtr Parser::ParseVarDefinition(int type) {
-    ASTPtr def = ParseExpression(), next_def = nullptr;
-    if (!def) return nullptr;
-    if (cur_token_ == ',') {
-        NextToken();
-        next_def = ParseVarDefinition(type);
+    VarDefList defs;
+    while (cur_token_ != kSeparator) {
+        if (cur_token_ != kId) return PrintError("expected identifier");
+        auto id = lexer_.id_val();
+        ASTPtr init_val = nullptr;
+        if (NextToken() != ',') {
+            if (cur_token_ != kOperator && lexer_.op_val() != kAssign) {
+                return PrintError("invalid variable initialization");
+            }
+            NextToken();
+            init_val = ParseExpression();
+            if (cur_token_ == ',') NextToken();
+        }
+        else {
+            NextToken();   // eat ','
+        }
+        defs.push_back(std::make_pair(id, std::move(init_val)));
     }
-    return std::make_unique<VariableAST>(std::move(def), std::move(next_def), type);
+    return std::make_unique<VariableAST>(std::move(defs), type);
 }
 
 ASTPtr Parser::ParseFunctionDef() {
@@ -88,7 +101,7 @@ ASTPtr Parser::ParseFunctionDef() {
         for (;;) {
             auto arg_type = lexer_.key_val();
             if (arg_type < kNumber || arg_type > kList) {
-                return PrintError("illegal argument type");
+                return PrintError("invalid argument type");
             }
             args.push_back(std::make_unique<IdentifierAST>(lexer_.id_val(), arg_type));
 
@@ -115,7 +128,7 @@ ASTPtr Parser::ParseFunctionDef() {
     if (NextToken() != kKeyword) return PrintError("expected type");
     auto return_type = lexer_.key_val();
     if (return_type < kNumber || return_type > kVoid) {
-        return PrintError("illegal return value type");
+        return PrintError("invalid return value type");
     }
 
     if (NextToken() != '{') return PrintError("expected '{'");
@@ -168,8 +181,11 @@ ASTPtr Parser::ParseAsm() {
                 oss << lexer_.dec_val();
                 break;
             }
-            case ',': {
-                oss << ',';
+            case kStr: {
+                oss << '"' << lexer_.str_val() << '"';
+            }
+            case ',': case '\'': case '\\': {
+                oss << (char)cur_token_;
                 break;
             }
             case ':': {
@@ -182,7 +198,7 @@ ASTPtr Parser::ParseAsm() {
                 break;
             }
             default: {
-                return PrintError("illegal assembly");
+                return PrintError("invalid assembly");
             }
         }
     }
@@ -224,23 +240,27 @@ ASTPtr Parser::ParseWhile() {
     return std::make_unique<WhileAST>(std::move(cond), std::move(body));
 }
 
-ASTPtr Parser::ParseSingleWord() {
+ASTPtr Parser::ParseExternal() {
     auto type = lexer_.key_val();
     NextToken();
-
-    if (type == kReturn && cur_token_ == kSeparator) {
-        return std::make_unique<SingleWordAST>(type, nullptr);
+    ASTPtrList libs;
+    while (cur_token_ != kSeparator) {
+        if (cur_token_ != kId) return PrintError("invalid import/export");
+        libs.push_back(std::make_unique<IdentifierAST>(lexer_.id_val(), -1));
+        if (NextToken() == ',') NextToken();
     }
-
-    auto value = ParseExpression();
-    if (!value) return nullptr;
-    return std::make_unique<SingleWordAST>(type, std::move(value));
+    return std::make_unique<ExternalAST>(type, std::move(libs));
 }
 
 ASTPtr Parser::ParseControlFlow() {
     auto type = lexer_.key_val();
     NextToken();
-    return std::make_unique<ControlFlowAST>(type);
+    if (type == kReturn && cur_token_ != kSeparator) {
+        auto value = ParseExpression();
+        if (!value) return nullptr;
+        return std::make_unique<ControlFlowAST>(type, std::move(value));
+    }
+    return std::make_unique<ControlFlowAST>(type, nullptr);
 }
 
 ASTPtr Parser::ParseId() {
@@ -261,7 +281,7 @@ ASTPtr Parser::ParseBracket() {
         if (cur_token_ == kId) return ParseFunctionDef();
         // conversion operator
         if (cur_token_ == ')') return ParseTypeConv();
-        return PrintError("illegal bracket expression");
+        return PrintError("invalid bracket expression");
     }
     if (cur_token_ == ')') return ParseFunctionDef();
 
@@ -293,7 +313,7 @@ ASTPtr Parser::ParsePrimary() {
         case kKeyword: {
             switch (lexer_.key_val()) {
                 case kNumber: case kFloat: case kFunction:
-                case kString: case kList: {
+                case kString: case kList: case kVar: {
                     auto type = lexer_.key_val();
                     NextToken();
                     return ParseVarDefinition(type);
@@ -307,14 +327,14 @@ ASTPtr Parser::ParsePrimary() {
                 case kWhile: {
                     return ParseWhile();
                 }
-                case kImport: case kExport: case kReturn: {
-                    return ParseSingleWord();
+                case kImport: case kExport: {
+                    return ParseExternal();
                 }
-                case kBreak: case kContinue: {
+                case kBreak: case kContinue: case kReturn: {
                     return ParseControlFlow();
                 }
                 default: {
-                    return PrintError("illegal usage of keyword");
+                    return PrintError("invalid usage of keyword");
                 }
             }
         }
@@ -340,9 +360,9 @@ ASTPtr Parser::ParsePrimary() {
         case '(': {
             return ParseBracket();
         }
-        case '{': {
-            return ParseBlock();
-        }
+        // case '{': {   // bare 'code block' is not supported
+        //     return ParseBlock();
+        // }
         default: {
             return PrintError("unknown syntax");
         }
