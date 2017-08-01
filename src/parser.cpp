@@ -75,7 +75,7 @@ ASTPtr Parser::ParseTypeConv() {
 
 ASTPtr Parser::ParseVarDefinition(int type) {
     VarDefList defs;
-    while (cur_token_ != kSeparator) {
+    while (cur_token_ != kSeparator && cur_token_ != kEOF) {
         if (cur_token_ != kId) return PrintError("expected identifier");
         auto id = lexer_.id_val();
         ASTPtr init_val = nullptr;
@@ -244,7 +244,7 @@ ASTPtr Parser::ParseExternal() {
     auto type = lexer_.key_val();
     NextToken();
     LibList libs;
-    while (cur_token_ != kSeparator) {
+    while (cur_token_ != kSeparator && cur_token_ != kEOF) {
         if (cur_token_ != kId) return PrintError("invalid import/export");
         libs.push_back(lexer_.id_val());
         if (NextToken() == ',') NextToken();
