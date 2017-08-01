@@ -118,7 +118,7 @@ int Lexer::HandleNum() {
         NextChar();
         if (last_char_ == 'X' || last_char_ == 'x') {   // hex
             NextChar();
-            while(isalnum(last_char_)) {
+            while (isalnum(last_char_)) {
                 num_str += last_char_;
                 NextChar();
             }
@@ -155,7 +155,7 @@ int Lexer::HandleString() {
     std::string str, temp;
     NextChar();
 
-    while(last_char_ != '\"') {   // start with double quotes
+    while (last_char_ != '\"') {   // start with double quotes
         if (last_char_ == '\\') {   // escaped character
             NextChar();
             if (IsEndOfLine()) return PrintError("expected \'\"\'");
@@ -219,7 +219,7 @@ int Lexer::HandleOperator() {
     do {   // read operator
         op += last_char_;
         NextChar();
-    } while (IsOperatorChar(last_char_));
+    } while (!in_.eof() && IsOperatorChar(last_char_));
 
     auto temp = GetIndex(op.c_str(), operator_str);
     if (temp != kError) {

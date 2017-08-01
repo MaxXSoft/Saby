@@ -21,4 +21,4 @@ var input = (string str) => string {
     }
 }
 
-export print, println, input
+export *
