@@ -179,10 +179,38 @@ int Lexer::HandleString() {
         NextChar();
         if (IsEndOfLine()) return PrintError("expected \'\"\'");
     }
-    NextChar();   // eat right bracket
+    NextChar();   // eat right quotation mark
 
     str_val_ = str;
     return kStr;
+}
+
+int Lexer::HandleChar() {
+    std::string char_str;
+    NextChar();
+    while (last_char_ != '\'') {
+        char_str += last_char_;
+        NextChar();
+        if (IsEndOfLine()) return PrintError("expected \"\'\"");
+    }
+    NextChar();
+
+    if (char_str.length() == 1) {
+        num_val_ = (long long)char_str[0];
+        return kNum;
+    }
+    else if (char_str.length() == 0) {
+        return PrintError("invalid character constant");
+    }
+    else if (char_str[0] == '\\') {
+        auto ret = GetDLE(char_str.substr(1));
+        if (ret == kError) return PrintError("unknown escaped character");
+        num_val_ = (long long)ret;
+        return kNum;
+    }
+    else {
+        return PrintError("invalid character constant");
+    }
 }
 
 int Lexer::HandleOperator() {
@@ -249,6 +277,9 @@ int Lexer::NextToken() {
 
     // string
     if (last_char_ == '\"') return HandleString();
+
+    // character
+    if (last_char_ == '\'') return HandleChar();
 
     // operator
     if (IsOperatorChar(last_char_)) return HandleOperator();

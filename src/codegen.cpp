@@ -127,8 +127,7 @@ int ControlFlowAST::CodeGen() {
 int ExternalAST::CodeGen() {
     std::cout << "ExternalAST(" << type_ << ", ";
     for (const auto &i : libs_) {
-        i->CodeGen();
-        std::cout << ". ";
+        std::cout << i << ". ";
     }
     std::cout << ")";
     return 0;

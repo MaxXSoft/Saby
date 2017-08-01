@@ -70,6 +70,7 @@ private:
     int HandleId();
     int HandleNum();
     int HandleString();
+    int HandleChar();
     int HandleOperator();
     int HandleEOL();
 

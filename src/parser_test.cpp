@@ -7,14 +7,20 @@ int main(int argc, const char *argv[]) {
     Lexer lexer(in);
     Parser parser(lexer);
     Analyzer analyzer(parser);
+
     while (auto ast = parser.ParseNext()) {
-        ast->SemaAnalyze(analyzer);
+        if (ast->SemaAnalyze(analyzer) == kTypeError) break;
         ast->CodeGen();
         std::cout << std::endl;
     }
-    // for (const auto &i : analyzer.env()->table()) {
-    //     std::cout << i.first << ": ";
-    //     std::cout << i.second.type() << std::endl;
-    // }
+
+    auto err_num = lexer.error_num() + parser.error_num() + analyzer.error_num();
+    if (err_num == 1) {
+        std::cout << err_num << " error generated." << std::endl;
+    }
+    else if (err_num > 1) {
+        std::cout << err_num << " errors generated." << std::endl;
+    }
+    
     return 0;
 }

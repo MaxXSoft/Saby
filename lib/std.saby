@@ -1,0 +1,24 @@
+var print = (string str) {
+    asm {
+        int  9
+    }
+}
+
+var println = (string str) {
+    asm {
+        int  9
+        mov  a1, '\n'
+        int  8
+    }
+}
+
+var input = (string str) => string {
+    asm {
+        int  9
+        # mov a1, allocate new string
+        int  7
+        # mov rv, string addr
+    }
+}
+
+export print, println, input

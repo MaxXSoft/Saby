@@ -25,7 +25,7 @@ public:
     TypeValue AnalyzeIf(const ASTPtr &cond, const ASTPtr &then, const ASTPtr &else_then);
     TypeValue AnalyzeWhile(const ASTPtr &cond, const ASTPtr &body);
     TypeValue AnalyzeCtrlFlow(int ctrlflow_type, const ASTPtr &value);
-    TypeValue AnalyzeExtern(int ext_type, const ASTPtrList &libs);
+    TypeValue AnalyzeExtern(int ext_type, const LibList &libs);
 
     unsigned int error_num() const { return error_num_; }
     const EnvPtr &env() const { return env_; }
@@ -42,7 +42,6 @@ private:
     Parser &parser_;
     unsigned int error_num_;
     EnvPtr env_, nested_env_;
-    // SymbolValue last_val_;
 };
 
 #endif // SABY_SEMA_H_

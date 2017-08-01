@@ -84,12 +84,12 @@ bool CheckType(int operator_id, TypeValue type) {
 
 TypeValue Analyzer::PrintError(const char *description, const char *id) {
     if (id) {
-        fprintf(stderr, "\033[1manalyzer\033[0m(line %u): "
+        fprintf(stderr, "\033[1manalyzer\033[0m(before line %u): "
                         "\033[31m\033[1merror:\033[0m id '%s' %s\n", 
                 parser_.line_pos(), id, description);
     }
     else {
-        fprintf(stderr, "\033[1manalyzer\033[0m(line %u): "
+        fprintf(stderr, "\033[1manalyzer\033[0m(before line %u): "
                         "\033[31m\033[1merror:\033[0m %s\n", 
                 parser_.line_pos(), description);
     }
@@ -255,7 +255,7 @@ TypeValue Analyzer::AnalyzeCtrlFlow(int ctrlflow_type, const ASTPtr &value) {
     return kVoid;
 }
 
-TypeValue Analyzer::AnalyzeExtern(int ext_type, const ASTPtrList &libs) {
+TypeValue Analyzer::AnalyzeExtern(int ext_type, const LibList &libs) {
     if (ext_type == kImport) {
         // load symbol table
         // TODO

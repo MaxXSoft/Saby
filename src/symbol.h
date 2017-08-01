@@ -4,7 +4,6 @@
 #include <string>
 #include <memory>
 #include <map>
-#include <utility>
 #include <vector>
 
 using TypeValue = long long;
@@ -27,33 +26,10 @@ public:
         table_.insert(SymbolHash::value_type(id, type));
     }
 
-    TypeValue GetType(const std::string &id, bool recursive = true) {
-        auto sym = table_.find(id);
-        if (sym != table_.end()) {
-            return sym->second;
-        }
-        else {
-            if (!recursive) return kTypeError;
-            if (outer_ != nullptr) {
-                return outer_->GetType(id);
-            }
-            else {
-                return kTypeError;
-            }
-        }
-    }
-
-    void SetType(const std::string &id, TypeValue type) {
-        auto sym = table_.find(id);
-        if (sym != table_.end()) {
-            sym->second = type;
-        }
-        else {
-            if (outer_ != nullptr) {
-                outer_->SetType(id, type);
-            }
-        }
-    }
+    TypeValue GetType(const std::string &id, bool recursive = true);
+    void SetType(const std::string &id, TypeValue type);
+    bool SaveEnv(const char *path);
+    bool LoadEnv(const char *path);
 
     const EnvPtr &outer() const { return outer_; }
 

@@ -184,7 +184,7 @@ ASTPtr Parser::ParseAsm() {
             case kStr: {
                 oss << '"' << lexer_.str_val() << '"';
             }
-            case ',': case '\'': case '\\': {
+            case ',': {
                 oss << (char)cur_token_;
                 break;
             }
@@ -243,10 +243,10 @@ ASTPtr Parser::ParseWhile() {
 ASTPtr Parser::ParseExternal() {
     auto type = lexer_.key_val();
     NextToken();
-    ASTPtrList libs;
+    LibList libs;
     while (cur_token_ != kSeparator) {
         if (cur_token_ != kId) return PrintError("invalid import/export");
-        libs.push_back(std::make_unique<IdentifierAST>(lexer_.id_val(), -1));
+        libs.push_back(lexer_.id_val());
         if (NextToken() == ',') NextToken();
     }
     return std::make_unique<ExternalAST>(type, std::move(libs));

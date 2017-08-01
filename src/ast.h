@@ -13,6 +13,7 @@ using ASTPtr = std::unique_ptr<ExpressionAST>;
 using ASTPtrList = std::vector<ASTPtr>;
 using VarDef = std::pair<std::string, ASTPtr>;
 using VarDefList = std::vector<VarDef>;
+using LibList = std::vector<std::string>;
 
 #include "analyzer.h"
 
@@ -22,6 +23,7 @@ public:
 
     virtual TypeValue SemaAnalyze(Analyzer &ana) = 0;
     virtual int CodeGen() = 0;
+
     EnvPtr env;
 };
 
@@ -203,7 +205,7 @@ private:
 // import, export
 class ExternalAST : public ExpressionAST {
 public:
-    ExternalAST(int type, ASTPtrList libs)
+    ExternalAST(int type, LibList libs)
             : type_(type), libs_(std::move(libs)) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
@@ -211,7 +213,7 @@ public:
 
 private:
     int type_;
-    ASTPtrList libs_;
+    LibList libs_;
 };
 
 #endif // SABY_AST_H_
