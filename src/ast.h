@@ -1,12 +1,12 @@
 #ifndef SABY_AST_H_
 #define SABY_AST_H_
 
-#include "symbol.h"
-
 #include <string>
 #include <memory>
 #include <utility>
 #include <vector>
+
+#include "symbol.h"
 
 class ExpressionAST;
 using ASTPtr = std::unique_ptr<ExpressionAST>;

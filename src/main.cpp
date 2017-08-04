@@ -1,9 +1,9 @@
+#include <vector>
+#include <string>
+
 #include "lexer.h"
 #include "parser.h"
 #include "analyzer.h"
-
-#include <vector>
-#include <string>
 
 int main(int argc, const char *argv[]) {
     std::vector<std::string> arg_list;

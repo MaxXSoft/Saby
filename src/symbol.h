@@ -32,6 +32,7 @@ public:
     bool LoadEnv(const char *path);
 
     const EnvPtr &outer() const { return outer_; }
+    // const SymbolHash &table() const { return table_; }
 
 private:
     EnvPtr outer_;
