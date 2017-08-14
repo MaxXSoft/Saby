@@ -1,23 +1,23 @@
 var print = (string str) {
     asm {
-        int  9
+        int  "AddString"
     }
 }
 
 var println = (string str) {
     asm {
-        int  9
+        int  "AddString"
         mov  a1, '\n'
-        int  8
+        int  "AddChar"
     }
 }
 
 var input = (string str) => string {
     asm {
-        int  9
-        # mov a1, allocate new string
-        int  7
-        # mov rv, string addr
+        int  "AddString"
+        news a1
+        int  "GetString"
+        mov  rv, a1
     }
 }
 

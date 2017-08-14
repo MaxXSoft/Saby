@@ -124,7 +124,7 @@ TypeValue Analyzer::AnalyzeVar(const VarDefList &defs, TypeValue type) {
         // type deduce
         if (type == kVar && !deduced) {
             if (init_type == kVar) {
-                return PrintError("can not deduce the type of a expression with a uncertain type");
+                return PrintError("cannot deduce the type of a expression with a uncertain type");
             }
             type = init_type;
             deduced = true;
@@ -175,7 +175,7 @@ TypeValue Analyzer::AnalyzeCall(const ASTPtr &callee, const ASTPtrList &args) {
         return PrintError("callee is not a function");
     }
 
-    // can not confirm the return type of type 'function'
+    // cannot confirm the return type of type 'function'
     // type 'var' means a kind of uncertain type
     if (ret == kFunction || ret == kVar) return kVar;
     // TODO: call a 'var' type variable may cause system failure
@@ -249,20 +249,29 @@ TypeValue Analyzer::AnalyzeCtrlFlow(int ctrlflow_type, const ASTPtr &value) {
             }
         }
         else {
-            return PrintError("can not return outside the function");
+            return PrintError("cannot return outside the function");
         }
     }
     return kVoid;
 }
 
 TypeValue Analyzer::AnalyzeExtern(int ext_type, const LibList &libs) {
-    if (ext_type == kImport) {
+    if (env_->outer() != nullptr) {
+        return PrintError("cannot import/export libraries in nested block");
+    }
+    if (ext_type == kImport) {   // TODO: test
         // load symbol table
-        // TODO
+        for (const auto &i : libs) {
+            if (!env_->LoadEnv((lib_path_ + i + ".saby.sym").c_str())) {
+                return PrintError("cannot be imported", i.c_str());
+            }
+        }
     }
     else { // ext_type == kExport
         // export symbol table
-        // TODO
+        if (!env_->SaveEnv(sym_path_.c_str(), libs)) {
+            return PrintError("cannot export symbol table");
+        }
     }
     return kVoid;
 }

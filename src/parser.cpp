@@ -182,7 +182,7 @@ ASTPtr Parser::ParseAsm() {
                 break;
             }
             case kStr: {
-                oss << '"' << lexer_.str_val() << '"';
+                oss << '"' << lexer_.str_val() << '"';   // TODO: unknown error??
             }
             case ',': {
                 oss << (char)cur_token_;

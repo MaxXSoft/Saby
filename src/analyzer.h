@@ -1,6 +1,8 @@
 #ifndef SABY_SEMA_H_
 #define SABY_SEMA_H_
 
+#include <string>
+
 class Analyzer;
 
 #include "symbol.h"
@@ -31,6 +33,9 @@ public:
     const EnvPtr &env() const { return env_; }
     const EnvPtr &nested_env() const { return nested_env_; }
 
+    void set_lib_path(const std::string lib_path) { lib_path_ = lib_path; }
+    void set_sym_path(const std::string sym_path) { sym_path_ = sym_path; }
+
 private:
     TypeValue PrintError(const char *description, const char *id = nullptr);
     void NewEnvironment() {
@@ -42,6 +47,8 @@ private:
     Parser &parser_;
     unsigned int error_num_;
     EnvPtr env_, nested_env_;
+    // lib_path: run_path/lib/; sym_path: file_path/file_name.saby.sym
+    std::string lib_path_, sym_path_;
 };
 
 #endif // SABY_SEMA_H_

@@ -36,13 +36,23 @@ void Environment::SetType(const std::string &id, TypeValue type) {
     }
 }
 
-bool Environment::SaveEnv(const char *path) {
+bool Environment::SaveEnv(const char *path, const std::vector<std::string> &syms) {
     std::ofstream out(path, std::ofstream::binary);
     if (!out.is_open()) return false;
     out.write((char *)&header, sizeof(header));
-    for (const auto &i : table_) {
-        out << i.first << '\0';
-        out.write((char *)&i.second, sizeof(TypeValue));
+    if (syms[0] == "*") {
+        for (const auto &i : table_) {
+            out << i.first << '\0';
+            out.write((char *)&i.second, sizeof(TypeValue));
+        }
+    }
+    else {   // TODO: reduce algorithm complexity
+        for (const auto &i : syms) {
+            auto it = table_.find(i);
+            if (it == table_.end()) return false;
+            out << it->first << '\0';
+            out.write((char *)&it->second, sizeof(TypeValue));
+        }
     }
     out.close();
     return true;

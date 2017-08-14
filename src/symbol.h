@@ -28,7 +28,7 @@ public:
 
     TypeValue GetType(const std::string &id, bool recursive = true);
     void SetType(const std::string &id, TypeValue type);
-    bool SaveEnv(const char *path);
+    bool SaveEnv(const char *path, const std::vector<std::string> &syms);
     bool LoadEnv(const char *path);
 
     const EnvPtr &outer() const { return outer_; }
