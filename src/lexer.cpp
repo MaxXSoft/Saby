@@ -255,7 +255,7 @@ int Lexer::NextToken() {
         do {
             NextChar();
         } while (!IsEndOfLine());
-		if (!in_.eof()) return NextToken();
+        if (!in_.eof()) return NextToken();
     }
 
     // separator

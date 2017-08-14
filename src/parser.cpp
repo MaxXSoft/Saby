@@ -139,27 +139,27 @@ ASTPtr Parser::ParseFunctionDef() {
 }
 
 ASTPtr Parser::ParseFunctionCall(ASTPtr callee) {
-	NextToken();   // eat '('
-	ASTPtrList args;
-	if (cur_token_ != ')') {
-		for (;;) {
-			if (auto arg = ParseExpression()) {
-				args.push_back(std::move(arg));
-			}
-			else {
-				return nullptr;
-			}
-			if (cur_token_ == ')') break;
-			if (cur_token_ != ',') {
-				return PrintError("expected ')' or  ',' in argument list");
-			}
-			NextToken();   // eat ','
-		}
-	}
-	auto call_ast = std::make_unique<CallAST>(std::move(callee), std::move(args));
-	NextToken();   // eat ')'
-	if (cur_token_ == '(') return ParseFunctionCall(std::move(call_ast));
-	return std::move(call_ast);
+    NextToken();   // eat '('
+    ASTPtrList args;
+    if (cur_token_ != ')') {
+        for (;;) {
+            if (auto arg = ParseExpression()) {
+                args.push_back(std::move(arg));
+            }
+            else {
+                return nullptr;
+            }
+            if (cur_token_ == ')') break;
+            if (cur_token_ != ',') {
+                return PrintError("expected ')' or  ',' in argument list");
+            }
+            NextToken();   // eat ','
+        }
+    }
+    auto call_ast = std::make_unique<CallAST>(std::move(callee), std::move(args));
+    NextToken();   // eat ')'
+    if (cur_token_ == '(') return ParseFunctionCall(std::move(call_ast));
+    return std::move(call_ast);
 }
 
 ASTPtr Parser::ParseAsm() {
@@ -170,7 +170,7 @@ ASTPtr Parser::ParseAsm() {
     while (NextToken() != '}') {
         switch (cur_token_) {
             case kId: {
-				oss << lexer_.id_val() << ' ';
+                oss << lexer_.id_val() << ' ';
                 break;
             }
             case kNum: {
@@ -189,7 +189,7 @@ ASTPtr Parser::ParseAsm() {
                 break;
             }
             case ':': {
-				oss.seekp(-1, std::ios_base::cur);   // TODO: Test the situation: test1: mov r1, 1
+                oss.seekp(-1, std::ios_base::cur);   // TODO: Test the situation: test1: mov r1, 1
                 oss << ':';
                 break;
             }
@@ -214,7 +214,7 @@ ASTPtr Parser::ParseIf() {
     if (cur_token_ != '{') return PrintError("expected '{'");
 
     ASTPtr if_body = ParseBlock(), else_body = nullptr;
-	if (cur_token_ == kSeparator) NextToken();
+    if (cur_token_ == kSeparator) NextToken();
     if (cur_token_ == kKeyword && lexer_.key_val() == kElse) {
         NextToken();
         if (cur_token_ == kKeyword && lexer_.key_val() == kIf) {
@@ -271,12 +271,12 @@ ASTPtr Parser::ParseControlFlow() {
 
 ASTPtr Parser::ParseId() {
     std::string id = lexer_.id_val();
-	auto id_ast = std::make_unique<IdentifierAST>(id, -1);
+    auto id_ast = std::make_unique<IdentifierAST>(id, -1);
     NextToken();
     // variable reference, type -1 means reference
-	if (cur_token_ != '(') return std::move(id_ast);
+    if (cur_token_ != '(') return std::move(id_ast);
     // or is a function call expression
-	return ParseFunctionCall(std::move(id_ast));
+    return ParseFunctionCall(std::move(id_ast));
 }
 
 ASTPtr Parser::ParseBracket() {

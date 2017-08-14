@@ -30,7 +30,7 @@ private:
     ASTPtr ParseTypeConv();
     ASTPtr ParseVarDefinition(int type);
     ASTPtr ParseFunctionDef();
-	ASTPtr ParseFunctionCall(ASTPtr callee);
+    ASTPtr ParseFunctionCall(ASTPtr callee);
     ASTPtr ParseAsm();
     ASTPtr ParseIf();
     ASTPtr ParseWhile();

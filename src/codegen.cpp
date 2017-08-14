@@ -58,9 +58,9 @@ int UnaryExpressionAST::CodeGen() {
 }
 
 int CallAST::CodeGen() {
-	std::cout << "CallAST(";
-	callee_->CodeGen();
-	std::cout << ", ";
+    std::cout << "CallAST(";
+    callee_->CodeGen();
+    std::cout << ", ";
     for (const auto &i : args_) {
         if (i) i->CodeGen();
         std::cout << ". ";
@@ -85,8 +85,8 @@ int FunctionAST::CodeGen() {
         if (i) i->CodeGen();
         std::cout << ". ";
     }
-	std::cout << ", ";
-	std::cout << return_type_ << ", ";
+    std::cout << ", ";
+    std::cout << return_type_ << ", ";
     if (body_) body_->CodeGen();
     std::cout << ")";
     return 0;

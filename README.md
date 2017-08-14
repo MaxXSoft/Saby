@@ -2,7 +2,7 @@
 
 **Saby** is a programming language created by *Max Xing* on a weekend night. 
 
-Saby compiler aimed to compile Saby into ZexVM bytecode. 
+Saby compiler aimed to compile Saby into [ZexVM](https://github.com/MaxXSoft/ZexVM) bytecode. 
 
 ---
 
