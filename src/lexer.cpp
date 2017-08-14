@@ -1,9 +1,9 @@
+#include "lexer.h"
+
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
 #include <cctype>
-
-#include "lexer.h"
 
 namespace {
 
