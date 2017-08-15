@@ -44,8 +44,12 @@ void PrintError(const std::string &err_msg) {
 } // namespace
 
 int main(int argc, const char *argv[]) {
-    xstl::ArgumentHandler argh;
+    std::string lib_path(argv[0]), sym_path(argv[1]);
+    lib_path = lib_path.substr(0, lib_path.rfind("/") + 1) + "../lib/";
+    sym_path += ".sym";
     std::string input_file, output_file;
+
+    xstl::ArgumentHandler argh;
 
     if (argc < 2) PrintError("");
 
