@@ -15,9 +15,7 @@ var println = (string str) {
 var input = (string str) => string {
     asm {
         int  "AddString"
-        news a1
-        int  "GetString"
-        mov  rv, a1
+        int  "GetNewString"
     }
 }
 
