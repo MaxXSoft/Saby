@@ -7,14 +7,6 @@
 #include <vector>
 
 #include "symbol.h"
-
-class ExpressionAST;
-using ASTPtr = std::unique_ptr<ExpressionAST>;
-using ASTPtrList = std::vector<ASTPtr>;
-using VarDef = std::pair<std::string, ASTPtr>;
-using VarDefList = std::vector<VarDef>;
-using LibList = std::vector<std::string>;
-
 #include "analyzer.h"
 
 class ExpressionAST {
@@ -26,6 +18,11 @@ public:
 
     EnvPtr env;
 };
+
+using ASTPtr = std::unique_ptr<ExpressionAST>;
+using ASTPtrList = std::vector<ASTPtr>;
+using VarDef = std::pair<std::string, ASTPtr>;
+using VarDefList = std::vector<VarDef>;
 
 class IdentifierAST : public ExpressionAST {
 public:

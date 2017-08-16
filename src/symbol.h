@@ -6,8 +6,7 @@
 #include <map>
 #include <vector>
 
-using TypeValue = long long;
-constexpr TypeValue kTypeError = -1;
+#include "type.h"
 
 class Environment;
 using EnvPtr = std::shared_ptr<Environment>;

@@ -12,7 +12,7 @@ namespace {
 constexpr int kFuncMaxArgNum = 6;
 constexpr TypeValue kFuncTypeBase = 131;
 
-TypeValue GetFunctionType(const std::vector<TypeValue> &args_type, TypeValue ret_type) {
+TypeValue GetFunctionType(const TypeList &args_type, TypeValue ret_type) {
     if (ret_type == kTypeError) return kTypeError;
     TypeValue func_type = 0;
     for (const auto &i : args_type) {
@@ -86,12 +86,12 @@ TypeValue Analyzer::PrintError(const char *description, const char *id) {
     if (id) {
         fprintf(stderr, "\033[1manalyzer\033[0m(before line %u): "
                         "\033[31m\033[1merror:\033[0m id '%s' %s\n", 
-                parser_.line_pos(), id, description);
+                lexer_.line_pos(), id, description);
     }
     else {
         fprintf(stderr, "\033[1manalyzer\033[0m(before line %u): "
                         "\033[31m\033[1merror:\033[0m %s\n", 
-                parser_.line_pos(), description);
+                lexer_.line_pos(), description);
     }
     ++error_num_;
     return kTypeError;
@@ -114,14 +114,14 @@ TypeValue Analyzer::AnalyzeId(const std::string &id, TypeValue type) {
     }
 }
 
-TypeValue Analyzer::AnalyzeVar(const VarDefList &defs, TypeValue type) {
+TypeValue Analyzer::AnalyzeVar(const VarTypeList &defs, TypeValue type) {
     auto deduced = false;   // whether type has been deduced
     for (const auto &i : defs) {
         if (i.first == "@") return PrintError("invalid variable name '@'");
         if (env_->GetType(i.first, false) != kTypeError) {
             return PrintError("has already been defined", i.first.c_str());
         }
-        auto init_type = i.second->SemaAnalyze(*this);
+        auto init_type = i.second;
         // type deduce
         if (type == kVar && !deduced) {
             if (init_type == kVar) {
@@ -169,24 +169,23 @@ TypeValue Analyzer::AnalyzeUnaExpr(int op, TypeValue type) {
     }
 }
 
-TypeValue Analyzer::AnalyzeCall(const ASTPtr &callee, const ASTPtrList &args) {
-    auto ret = callee->SemaAnalyze(*this);
-    if (ret == kTypeError) return kTypeError;
-    if (ret < kFuncTypeBase && ret != kFunction && ret != kVar) {
+TypeValue Analyzer::AnalyzeCall(TypeValue callee, const TypeList &args) {
+    if (callee == kTypeError) return kTypeError;
+    if (callee < kFuncTypeBase && callee != kFunction && callee != kVar) {
         return PrintError("callee is not a function");
     }
 
     // cannot confirm the return type of type 'function'
     // type 'var' means a kind of uncertain type
-    if (ret == kFunction || ret == kVar) return kVar;
+    if (callee == kFunction || callee == kVar) return kVar;
     // TODO: call a 'var' type variable may cause system failure
 
-    auto ret_type = GetFuncRetType(ret);
-    auto arg_type = (ret - ret_type - kFuncTypeBase) / kFuncTypeBase;
+    auto ret_type = GetFuncRetType(callee);
+    auto arg_type = (callee - ret_type - kFuncTypeBase) / kFuncTypeBase;
 
     TypeValue a_type = 0;
     for (const auto &i : args) {
-        auto i_type = i->SemaAnalyze(*this);
+        auto i_type = i;
         if (i_type == kTypeError) return kTypeError;
         if (i_type >= kFuncTypeBase) i_type = kFunction;
         a_type = a_type * kFuncTypeBase + i_type + 1;
@@ -196,55 +195,21 @@ TypeValue Analyzer::AnalyzeCall(const ASTPtr &callee, const ASTPtrList &args) {
     return ret_type;
 }
 
-TypeValue Analyzer::AnalyzeBlock(const ASTPtrList &expr_list) {
-    NewEnvironment();
-    for (const auto &i : expr_list) {
-        auto ret = i->SemaAnalyze(*this);
-        if (ret == kTypeError) return kTypeError;
-    }
-    RestoreEnvironment();
-    return kVoid;
-}
-
-TypeValue Analyzer::AnalyzeFunc(const ASTPtrList &args, TypeValue ret_type, const ASTPtr &body) {
-    NewEnvironment();
-
-    std::vector<TypeValue> args_type;
-    for (const auto &i : args) {
-        args_type.push_back(i->SemaAnalyze(*this));
-    }
-    auto func_type = GetFunctionType(args_type, ret_type);
+TypeValue Analyzer::AnalyzeFunc(const TypeList &args, TypeValue ret_type) {
+    auto func_type = GetFunctionType(args, ret_type);
     if (func_type == kTypeError) return PrintError("invalid function definition");
     env_->Insert("@", func_type);   // insert '@' into current environment
-
-    if (body->SemaAnalyze(*this) == kTypeError) return kTypeError;
-
-    RestoreEnvironment();
     return func_type;
 }
 
-TypeValue Analyzer::AnalyzeIf(const ASTPtr &cond, const ASTPtr &then, const ASTPtr &else_then) {
-    if (cond->SemaAnalyze(*this) == kTypeError) return kTypeError;
-    if (then->SemaAnalyze(*this) == kTypeError) return kTypeError;
-    if (else_then->SemaAnalyze(*this) == kTypeError) return kTypeError;
-    return kVoid;
-}
-
-TypeValue Analyzer::AnalyzeWhile(const ASTPtr &cond, const ASTPtr &body) {
-    if (cond->SemaAnalyze(*this) == kTypeError) return kTypeError;
-    if (body->SemaAnalyze(*this) == kTypeError) return kTypeError;
-    return kVoid;
-}
-
-TypeValue Analyzer::AnalyzeCtrlFlow(int ctrlflow_type, const ASTPtr &value) {
+TypeValue Analyzer::AnalyzeCtrlFlow(int ctrlflow_type, TypeValue value) {
     if (ctrlflow_type == kReturn) {
         auto ret = env_->GetType("@");
         if (ret != kTypeError) {
-            if (value != nullptr) {
+            if (value != kTypeError) {   // kTypeError means return void
                 auto ret_type = GetFuncRetType(ret);
-                auto r_type = value->SemaAnalyze(*this);
-                if (r_type >= kFuncTypeBase) r_type = kFunction;
-                if (ret_type != r_type) {
+                if (value >= kFuncTypeBase) value = kFunction;
+                if (ret_type != value) {
                     return PrintError("type mismatch when return from function");
                 }
             }
@@ -260,7 +225,7 @@ TypeValue Analyzer::AnalyzeExtern(int ext_type, const LibList &libs) {
     if (env_->outer() != nullptr) {
         return PrintError("cannot import/export libraries in nested block");
     }
-    if (ext_type == kImport) {   // TODO: test
+    if (ext_type == kImport) {
         // load symbol table
         for (const auto &i : libs) {
             if (!env_->LoadEnv((lib_path_ + i + ".saby.sym").c_str())) {

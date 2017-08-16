@@ -1,8 +1,6 @@
 #ifndef SABY_PARSER_H_
 #define SABY_PARSER_H_
 
-class Parser;
-
 #include "lexer.h"
 #include "ast.h"
 
@@ -15,7 +13,6 @@ public:
 
     ASTPtr ParseNext() { return ParseExpression(); }
 
-    unsigned int line_pos() const { return lexer_.line_pos(); }
     unsigned int error_num() const { return error_num_; }
 
 private:
