@@ -273,7 +273,7 @@ int Lexer::NextToken() {
     }
 
     // number or decimal
-    if (isdigit(last_char_) || last_char_ == '.') return HandleNum();
+    if (isdigit(last_char_) /* || last_char_ == '.' */) return HandleNum();
 
     // string
     if (last_char_ == '\"') return HandleString();

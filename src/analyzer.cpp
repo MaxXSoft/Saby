@@ -117,6 +117,7 @@ TypeValue Analyzer::AnalyzeId(const std::string &id, TypeValue type) {
 TypeValue Analyzer::AnalyzeVar(const VarDefList &defs, TypeValue type) {
     auto deduced = false;   // whether type has been deduced
     for (const auto &i : defs) {
+        if (i.first == "@") return PrintError("invalid variable name '@'");
         if (env_->GetType(i.first, false) != kTypeError) {
             return PrintError("has already been defined", i.first.c_str());
         }

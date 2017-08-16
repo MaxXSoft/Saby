@@ -249,10 +249,18 @@ ASTPtr Parser::ParseExternal() {
         NextToken();
     }
     else {
+        std::string id;
         while (cur_token_ != kSeparator && cur_token_ != kEOF) {
             if (cur_token_ != kId) return PrintError("invalid import/export");
-            libs.push_back(lexer_.id_val());
-            if (NextToken() == ',') NextToken();
+            id += lexer_.id_val();
+            if (NextToken() == '.') {
+                id += '/';
+                NextToken();
+                continue;
+            }
+            libs.push_back(id);
+            id.clear();
+            if (cur_token_ == ',') NextToken();
         }
     }
     return std::make_unique<ExternalAST>(type, std::move(libs));
