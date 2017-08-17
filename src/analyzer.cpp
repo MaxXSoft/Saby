@@ -122,6 +122,7 @@ TypeValue Analyzer::AnalyzeVar(const VarTypeList &defs, TypeValue type) {
             return PrintError("has already been defined", i.first.c_str());
         }
         auto init_type = i.second;
+        if (init_type == kTypeError) return kTypeError;
         // type deduce
         if (type == kVar && !deduced) {
             if (init_type == kVar) {
