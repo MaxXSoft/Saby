@@ -17,8 +17,8 @@ int main(int argc, const char *argv[]) {
 
     while (auto ast = parser.ParseNext()) {
         if (ast->SemaAnalyze(analyzer) == kTypeError) break;
-        ast->CodeGen();
-        std::cout << std::endl;
+        // ast->CodeGen();
+        // std::cout << std::endl;
     }
 
     auto err_num = lexer.error_num() + parser.error_num() + analyzer.error_num();

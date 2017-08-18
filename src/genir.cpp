@@ -8,123 +8,123 @@ namespace {
 
 } // namespace
 
-int IdentifierAST::CodeGen() {
+int IdentifierAST::GenIR() {
     std::cout << "IdentifierAST(" << id_ << ", " << type_ << ")";
     return 0;
 }
 
-int VariableAST::CodeGen() {
+int VariableAST::GenIR() {
     std::cout << "VariableAST(";
     for (const auto &i : defs_) {
         std::cout << "(" << i.first << ", ";
-        i.second->CodeGen();
+        i.second->GenIR();
         std::cout << "). ";
     }
     std::cout << ", " << type_ << ")";
     return 0;
 }
 
-int NumberAST::CodeGen() {
+int NumberAST::GenIR() {
     std::cout << "NumberAST(" << value_ << ")";
     return 0;
 }
 
-int DecimalAST::CodeGen() {
+int DecimalAST::GenIR() {
     std::cout << "DecimalAST(" << value_ << ")";
     return 0;
 }
 
-int StringAST::CodeGen() {
+int StringAST::GenIR() {
     std::cout << "StringAST(" << str_ << ")";
     return 0;
 }
 
-int BinaryExpressionAST::CodeGen() {
+int BinaryExpressionAST::GenIR() {
     std::cout << "BinaryExpressionAST(" << operator_id_;
     std::cout << ", ";
-    if (lhs_) lhs_->CodeGen();
+    if (lhs_) lhs_->GenIR();
     std::cout << ", ";
-    if (rhs_) rhs_->CodeGen();
+    if (rhs_) rhs_->GenIR();
     std::cout << ")";
     return 0;
 }
 
-int UnaryExpressionAST::CodeGen() {
+int UnaryExpressionAST::GenIR() {
     std::cout << "UnaryExpressionAST(" << operator_id_;
     std::cout << ", ";
-    if (operand_) operand_->CodeGen();
+    if (operand_) operand_->GenIR();
     std::cout << ")";
     return 0;
 }
 
-int CallAST::CodeGen() {
+int CallAST::GenIR() {
     std::cout << "CallAST(";
-    callee_->CodeGen();
+    callee_->GenIR();
     std::cout << ", ";
     for (const auto &i : args_) {
-        if (i) i->CodeGen();
+        if (i) i->GenIR();
         std::cout << ". ";
     }
     std::cout << ")";
     return 0;
 }
 
-int BlockAST::CodeGen() {
+int BlockAST::GenIR() {
     std::cout << "{";
     for (const auto &i : expr_list_) {
-        if (i) i->CodeGen();
+        if (i) i->GenIR();
         std::cout << "; ";
     }
     std::cout << "}";
     return 0;
 }
 
-int FunctionAST::CodeGen() {
+int FunctionAST::GenIR() {
     std::cout << "FunctionAST(";
     for (const auto &i : args_) {
-        if (i) i->CodeGen();
+        if (i) i->GenIR();
         std::cout << ". ";
     }
     std::cout << ", ";
     std::cout << return_type_ << ", ";
-    if (body_) body_->CodeGen();
+    if (body_) body_->GenIR();
     std::cout << ")";
     return 0;
 }
 
-int AsmAST::CodeGen() {
+int AsmAST::GenIR() {
     std::cout << "AsmAST(" << asm_str_ << ")";
     return 0;
 }
 
-int IfAST::CodeGen() {
+int IfAST::GenIR() {
     std::cout << "IfAST(";
-    if (cond_) cond_->CodeGen();
+    if (cond_) cond_->GenIR();
     std::cout << ", ";
-    if (then_) then_->CodeGen();
+    if (then_) then_->GenIR();
     std::cout << ", ";
-    if (else_then_) else_then_->CodeGen();
+    if (else_then_) else_then_->GenIR();
     std::cout << ")";
     return 0;
 }
 
-int WhileAST::CodeGen() {
+int WhileAST::GenIR() {
     std::cout << "WhileAST(";
-    if (cond_) cond_->CodeGen();
+    if (cond_) cond_->GenIR();
     std::cout << ", ";
-    if (body_) body_->CodeGen();
+    if (body_) body_->GenIR();
     std::cout << ")";
     return 0;
 }
 
-int ControlFlowAST::CodeGen() {
+int ControlFlowAST::GenIR() {
     std::cout << "ControlFlowAST(" << type_ << ", ";
-    if (value_) value_->CodeGen();
+    if (value_) value_->GenIR();
     std::cout << ")";
     return 0;
 }
 
-int ExternalAST::CodeGen() {
+int ExternalAST::GenIR() {
     std::cout << "ExternalAST(" << type_ << ", ";
     for (const auto &i : libs_) {
         std::cout << i << ". ";

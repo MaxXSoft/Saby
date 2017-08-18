@@ -5,7 +5,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "analyzer.h"
-#include "generator.h"
+// #include "generator.h"
 #include "xstl/argh.h"
 
 namespace {
