@@ -4,12 +4,12 @@
 
 SSAPtr IRBuilder::NewBlock(SSAPtrList body) {
     auto block = std::make_unique<BlockSSA>(std::move(body));
-    block_var_def_.insert({static_cast<size_t>(block.get()), 0});
+    block_var_id_.insert({reinterpret_cast<size_t>(block.get()), 0});
     return std::move(block);
 }
 
 unsigned int IRBuilder::GetVariableID(SSAPtr &block, const std::string &var_name) {
-    auto block_id = static_cast<size_t>(block.get());
+    auto block_id = reinterpret_cast<size_t>(block.get());
     unsigned int id = 0;
 
     auto var_id = block_var_id_.find(block_id);
@@ -31,7 +31,7 @@ unsigned int IRBuilder::GetVariableID(SSAPtr &block, const std::string &var_name
             var_def.insert({var_name, id});
         }
         else {
-            id = vd_it.second;
+            id = vd_it->second;
             --var_id->second;
         }
     }
