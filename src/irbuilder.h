@@ -6,6 +6,8 @@ public:
     IRBuilder() {}
     ~IRBuilder() {}
 
+    int GetVariableID();
+
 private:
     //
 };

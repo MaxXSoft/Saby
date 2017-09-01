@@ -8,13 +8,14 @@
 
 #include "symbol.h"
 #include "analyzer.h"
+#include "ssa.h"
 
 class ExpressionAST {
 public:
     virtual ~ExpressionAST() = default;
 
     virtual TypeValue SemaAnalyze(Analyzer &ana) = 0;
-    virtual int GenIR() = 0;
+    virtual SSAPtr GenIR() = 0;
 
     EnvPtr env;
 };
@@ -29,7 +30,7 @@ public:
     IdentifierAST(const std::string &id, int type) : id_(id), type_(type) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     std::string id_;
@@ -42,7 +43,7 @@ public:
             : defs_(std::move(defs)), type_(type) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     VarDefList defs_;
@@ -54,7 +55,7 @@ public:
     NumberAST(long long value) : value_(value) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     long long value_;
@@ -65,7 +66,7 @@ public:
     DecimalAST(double value) : value_(value) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     double value_;
@@ -76,7 +77,7 @@ public:
     StringAST(const std::string &str) : str_(str) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     std::string str_;
@@ -89,7 +90,7 @@ public:
             : operator_id_(operator_id), lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     int operator_id_;
@@ -102,7 +103,7 @@ public:
             : operator_id_(operator_id), operand_(std::move(operand)) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     int operator_id_;
@@ -115,7 +116,7 @@ public:
             : callee_(std::move(callee)), args_(std::move(args)) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     ASTPtr callee_;
@@ -128,7 +129,7 @@ public:
             : expr_list_(std::move(expr_list)) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     ASTPtrList expr_list_;
@@ -141,7 +142,7 @@ public:
               body_(std::move(body)) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     ASTPtrList args_;
@@ -154,7 +155,7 @@ public:
     AsmAST(const std::string &asm_str) : asm_str_(asm_str) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     std::string asm_str_;
@@ -167,7 +168,7 @@ public:
               else_then_(std::move(else_then)) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     ASTPtr cond_, then_, else_then_;
@@ -179,7 +180,7 @@ public:
             : cond_(std::move(cond)), body_(std::move(body)) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     ASTPtr cond_, body_;
@@ -192,7 +193,7 @@ public:
             : type_(type), value_(std::move(value)) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     int type_;
@@ -206,7 +207,7 @@ public:
             : type_(type), libs_(std::move(libs)) {}
     
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    int GenIR() override;
+    SSAPtr GenIR() override;
 
 private:
     int type_;
