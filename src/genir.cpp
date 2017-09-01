@@ -6,7 +6,7 @@
 
 namespace {
 
-//
+IRBuilder irb;
 
 } // namespace
 

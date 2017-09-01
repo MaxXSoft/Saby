@@ -17,13 +17,15 @@ using SSAPtrList = std::vector<SSAPtr>;
 
 class BlockSSA : public BaseSSA {
 public:
-    BlockSSA(SSAPtr prev, SSAPtr next, SSAPtrList body)
-            : prev_(std::move(prev)), next_(std::move(next)),
-              body_(std::move(body)) {}
+    BlockSSA(SSAPtrList body) : body_(std::move(body)) {}
+
+    void set_next(SSAPtr next) { next_ = std::move(next); }
+    void AddPred(SSAPtr pred) { preds_.push_back(std::move(pred)); }
+    const SSAPtrList &preds() const { return preds_; }
 
 private:
-    SSAPtr prev_, next_;
-    SSAPtrList body_;
+    SSAPtrList preds_, body_;
+    SSAPtr next_;
 };
 
 class ValueSSA : public BaseSSA {
@@ -44,10 +46,10 @@ private:
 
 class VariableSSA : public BaseSSA {
 public:
-    VariableSSA(int id) : id_(id) {}
+    VariableSSA(unsigned int id) : id_(id) {}
 
 private:
-    int id_;
+    unsigned int id_;
 };
 
 class PhiSSA : public BaseSSA {
@@ -55,6 +57,7 @@ public:
     PhiSSA(SSAPtrList opr_list) : opr_list_(std::move(opr_list)) {}
 
     const SSAPtrList &users() const { return users_; }
+    void AddOpr(SSAPtr opr) { opr_list_.push_back(std::move(opr)); }
     void AddUser(SSAPtr user) { users_.push_back(std::move(user)); }
 
 private:
@@ -63,11 +66,12 @@ private:
 
 class QuadSSA : public BaseSSA {
 public:
-    QuadSSA(SSAPtr dst, Operator op, SSAPtr opr1, SSAPtr opr2)
-            : dst_(std::move(dst)), op_(op), opr1_(std::move(opr1)), opr2_(std::move(opr2)) {}
+    QuadSSA(SSAPtr dest, Operator op, SSAPtr opr1, SSAPtr opr2)
+            : dest_(std::move(dest)), op_(op),
+              opr1_(std::move(opr1)), opr2_(std::move(opr2)) {}
 
 private:
-    SSAPtr dst_, opr1_, opr2_;
+    SSAPtr dest_, opr1_, opr2_;
     Operator op_;
 };
 
