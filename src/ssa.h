@@ -17,13 +17,14 @@ using SSAPtrList = std::vector<SSAPtr>;
 
 class BlockSSA : public BaseSSA {
 public:
-    BlockSSA(SSAPtrList body) : body_(std::move(body)) {}
+    BlockSSA(unsigned int id, SSAPtrList body) : id_(id), body_(std::move(body)) {}
 
     void set_next(SSAPtr next) { next_ = std::move(next); }
     void AddPred(SSAPtr pred) { preds_.push_back(std::move(pred)); }
     const SSAPtrList &preds() const { return preds_; }
 
 private:
+    unsigned int id_;
     SSAPtrList preds_, body_;
     SSAPtr next_;
 };
