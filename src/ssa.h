@@ -35,6 +35,14 @@ public:
     ValueSSA(double value) : dec_val_(value), type_(ValueType::Decimal) {}
     ValueSSA(const std::string &value) : str_val_(value), type_(ValueType::String) {}
 
+    SSAPtr Duplicate() {
+        switch (type_) {
+            case ValueType::Number: return std::make_unique<ValueSSA>(num_val_);
+            case ValueType::Decimal: return std::make_unique<ValueSSA>(dec_val_);
+            case ValueType::String: return std::make_unique<ValueSSA>(str_val_);
+        }
+    }
+
 private:
     enum class ValueType : char {
         Number, Decimal, String

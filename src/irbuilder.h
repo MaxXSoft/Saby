@@ -13,7 +13,11 @@ public:
     SSAPtr NewBlock(SSAPtrList body);
     SSAPtr NewVariable();
 
+    void WriteVariable(unsigned int var_id, unsigned int block_id, SSARef value);
+    SSARef ReadVariable();
+
 private:
+    using SSARef = BaseSSA *;
     std::vector<unsigned int> var_id_;
     unsigned int current_block_;
 };
