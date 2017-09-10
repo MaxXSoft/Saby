@@ -4,27 +4,31 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <cstddef>
 
 #include "lexer.h"
+
+using IDType = size_t;
 
 class BaseSSA {
 public:
     virtual ~BaseSSA() = default;
 };
 
+using SSARef = BaseSSA *;
 using SSAPtr = std::unique_ptr<BaseSSA>;
 using SSAPtrList = std::vector<SSAPtr>;
 
 class BlockSSA : public BaseSSA {
 public:
-    BlockSSA(unsigned int id, SSAPtrList body) : id_(id), body_(std::move(body)) {}
+    BlockSSA(IDType id, SSAPtrList body) : id_(id), body_(std::move(body)) {}
 
     void set_next(SSAPtr next) { next_ = std::move(next); }
     void AddPred(SSAPtr pred) { preds_.push_back(std::move(pred)); }
     const SSAPtrList &preds() const { return preds_; }
 
 private:
-    unsigned int id_;
+    IDType id_;
     SSAPtrList preds_, body_;
     SSAPtr next_;
 };
@@ -55,10 +59,10 @@ private:
 
 class VariableSSA : public BaseSSA {
 public:
-    VariableSSA(unsigned int id) : id_(id) {}
+    VariableSSA(IDType id) : id_(id) {}
 
 private:
-    unsigned int id_;
+    IDType id_;
 };
 
 class PhiSSA : public BaseSSA {

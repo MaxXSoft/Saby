@@ -2,20 +2,18 @@
 
 #include <iostream>
 
-#include "irbuilder.h"
-
 namespace {
 
-IRBuilder irb;
+// IRBuilder irb;
 
 } // namespace
 
-SSAPtr IdentifierAST::GenIR() {
+SSAPtr IdentifierAST::GenIR(IRBuilder &irb) {
     std::cout << "IdentifierAST(" << id_ << ", " << type_ << ")";
     return nullptr;
 }
 
-SSAPtr VariableAST::GenIR() {
+SSAPtr VariableAST::GenIR(IRBuilder &irb) {
     std::cout << "VariableAST(";
     for (const auto &i : defs_) {
         std::cout << "(" << i.first << ", ";
@@ -26,22 +24,22 @@ SSAPtr VariableAST::GenIR() {
     return nullptr;
 }
 
-SSAPtr NumberAST::GenIR() {
-    std::cout << "NumberAST(" << value_ << ")";
-    return nullptr;
+SSAPtr NumberAST::GenIR(IRBuilder &irb) {
+    // std::cout << "NumberAST(" << value_ << ")";
+    return std::make_unique<ValueSSA>(value_);
 }
 
-SSAPtr DecimalAST::GenIR() {
-    std::cout << "DecimalAST(" << value_ << ")";
-    return nullptr;
+SSAPtr DecimalAST::GenIR(IRBuilder &irb) {
+    // std::cout << "DecimalAST(" << value_ << ")";
+    return std::make_unique<ValueSSA>(value_);
 }
 
-SSAPtr StringAST::GenIR() {
-    std::cout << "StringAST(" << str_ << ")";
-    return nullptr;
+SSAPtr StringAST::GenIR(IRBuilder &irb) {
+    // std::cout << "StringAST(" << str_ << ")";
+    return std::make_unique<ValueSSA>(str_);
 }
 
-SSAPtr BinaryExpressionAST::GenIR() {
+SSAPtr BinaryExpressionAST::GenIR(IRBuilder &irb) {
     std::cout << "BinaryExpressionAST(" << operator_id_;
     std::cout << ", ";
     if (lhs_) lhs_->GenIR();
@@ -51,7 +49,7 @@ SSAPtr BinaryExpressionAST::GenIR() {
     return nullptr;
 }
 
-SSAPtr UnaryExpressionAST::GenIR() {
+SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb) {
     std::cout << "UnaryExpressionAST(" << operator_id_;
     std::cout << ", ";
     if (operand_) operand_->GenIR();
@@ -59,7 +57,7 @@ SSAPtr UnaryExpressionAST::GenIR() {
     return nullptr;
 }
 
-SSAPtr CallAST::GenIR() {
+SSAPtr CallAST::GenIR(IRBuilder &irb) {
     std::cout << "CallAST(";
     callee_->GenIR();
     std::cout << ", ";
@@ -71,7 +69,7 @@ SSAPtr CallAST::GenIR() {
     return nullptr;
 }
 
-SSAPtr BlockAST::GenIR() {
+SSAPtr BlockAST::GenIR(IRBuilder &irb) {
     std::cout << "{";
     for (const auto &i : expr_list_) {
         if (i) i->GenIR();
@@ -81,7 +79,7 @@ SSAPtr BlockAST::GenIR() {
     return nullptr;
 }
 
-SSAPtr FunctionAST::GenIR() {
+SSAPtr FunctionAST::GenIR(IRBuilder &irb) {
     std::cout << "FunctionAST(";
     for (const auto &i : args_) {
         if (i) i->GenIR();
@@ -94,12 +92,12 @@ SSAPtr FunctionAST::GenIR() {
     return nullptr;
 }
 
-SSAPtr AsmAST::GenIR() {
+SSAPtr AsmAST::GenIR(IRBuilder &irb) {
     std::cout << "AsmAST(" << asm_str_ << ")";
     return nullptr;
 }
 
-SSAPtr IfAST::GenIR() {
+SSAPtr IfAST::GenIR(IRBuilder &irb) {
     std::cout << "IfAST(";
     if (cond_) cond_->GenIR();
     std::cout << ", ";
@@ -110,7 +108,7 @@ SSAPtr IfAST::GenIR() {
     return nullptr;
 }
 
-SSAPtr WhileAST::GenIR() {
+SSAPtr WhileAST::GenIR(IRBuilder &irb) {
     std::cout << "WhileAST(";
     if (cond_) cond_->GenIR();
     std::cout << ", ";
@@ -119,14 +117,14 @@ SSAPtr WhileAST::GenIR() {
     return nullptr;
 }
 
-SSAPtr ControlFlowAST::GenIR() {
+SSAPtr ControlFlowAST::GenIR(IRBuilder &irb) {
     std::cout << "ControlFlowAST(" << type_ << ", ";
     if (value_) value_->GenIR();
     std::cout << ")";
     return nullptr;
 }
 
-SSAPtr ExternalAST::GenIR() {
+SSAPtr ExternalAST::GenIR(IRBuilder &irb) {
     std::cout << "ExternalAST(" << type_ << ", ";
     for (const auto &i : libs_) {
         std::cout << i << ". ";
