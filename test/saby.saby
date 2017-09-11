@@ -30,9 +30,9 @@ function TestFunc = (float var1, function var2) => function {
     }
 }
 
-print(Fib(10))
+print((string)Fib(10))
 
-print(TestFunc(1.23, (number num) => number {
+print((string)TestFunc(1.23, (number num) => number {
     if num < 10 {
         return num + 10
     }
