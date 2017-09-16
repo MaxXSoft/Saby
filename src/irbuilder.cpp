@@ -1,6 +1,7 @@
 #include "irbuilder.h"
 
 #include <memory>
+#include <utility>
 
 SSAPtr IRBuilder::NewBlock(SSAPtrList body) {
     auto block = std::make_unique<BlockSSA>(current_block_++, std::move(body));
