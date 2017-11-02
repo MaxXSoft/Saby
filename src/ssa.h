@@ -9,11 +9,12 @@
 
 #include "lexer.h"
 
-using IDType = size_t;
+using IDType = std::size_t;
 
 class BaseSSA {
 public:
     virtual ~BaseSSA() = default;
+    // virtual void Destroy() = 0;
 };
 
 using SSARef = BaseSSA *;
@@ -27,6 +28,7 @@ public:
     void set_next(SSAPtr next) { next_ = std::move(next); }
     void AddPred(SSAPtr pred) { preds_.push_back(std::move(pred)); }
     const SSAPtrList &preds() const { return preds_; }
+    IDType id() const { return id_; }
 
 private:
     IDType id_;
@@ -68,13 +70,15 @@ private:
 
 class PhiSSA : public BaseSSA {
 public:
+    PhiSSA(IDType block_id) : block_id_(block_id) {}
     PhiSSA(SSAPtrList opr_list) : opr_list_(std::move(opr_list)) {}
-
+    
     const SSAPtrList &users() const { return users_; }
     void AddOpr(SSAPtr opr) { opr_list_.push_back(std::move(opr)); }
     void AddUser(SSAPtr user) { users_.push_back(std::move(user)); }
 
 private:
+    IDType block_id_;
     SSAPtrList opr_list_, users_;
 };
 
@@ -95,6 +99,11 @@ public:
 
 private:
     SSAPtr block_;
+};
+
+class UndefSSA : public BaseSSA {
+public:
+    UndefSSA() {}
 };
 
 #endif // SABY_SSA_H_

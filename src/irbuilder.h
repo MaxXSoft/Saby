@@ -7,13 +7,13 @@
 
 class IRBuilder {
 public:
-    IRBuilder() : current_block_(0), current_def_({{nullptr}}) {}
+    IRBuilder() : current_block_(0) /*, current_def_({{nullptr}}) */ {}
     ~IRBuilder() {}
 
     SSAPtr NewBlock(SSAPtrList body);
     SSAPtr NewVariable();
 
-    void WriteVariable(IDType var_id, IDType block_id, SSAPtr &value);
+    void WriteVariable(IDType var_id, IDType block_id, SSAPtr value);
     SSARef ReadVariable(IDType var_id, IDType block_id);
     SSARef ReadVariableRecursive(IDType var_id, IDType block_id);
     SSARef AddPhiOperands(IDType var_id, SSAPtr &phi);
@@ -22,7 +22,8 @@ public:
 
 private:
     IDType current_block_;
-    std::vector<std::vector<SSAPtr>> current_def_, incomplete_phis_;
+    std::vector<SSAPtrList> current_def_, incomplete_phis_;
+    std::vector<std::unique_ptr<BlockSSA>> blocks_;
     std::vector<IDType> sealed_blocks_;
 };
 
