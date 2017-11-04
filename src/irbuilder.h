@@ -13,14 +13,17 @@ public:
     SSAPtr NewBlock(SSAPtrList body);
     SSAPtr NewVariable();
 
-    void WriteVariable(IDType var_id, IDType block_id, SSAPtr value);
-    SSARef ReadVariable(IDType var_id, IDType block_id);
-    SSARef ReadVariableRecursive(IDType var_id, IDType block_id);
-    SSARef AddPhiOperands(IDType var_id, SSAPtr &phi);
+    void WriteVariable(IDType var_id, IDType block_id, SSAPtr &value);
+    SSAPtr ReadVariable(IDType var_id, IDType block_id);
+    void SealBlock(SSAPtr &block);
 
     void Release();
 
 private:
+    SSAPtr ReadVariableRecursive(IDType var_id, IDType block_id);
+    SSAPtr AddPhiOperands(IDType var_id, SSAPtr &phi);
+    SSAPtr TryRemoveTrivialPhi(const SSAPtr &phi);
+    
     IDType current_block_;
     std::vector<SSAPtrList> current_def_, incomplete_phis_;
     std::vector<std::unique_ptr<BlockSSA>> blocks_;

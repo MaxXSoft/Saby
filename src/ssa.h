@@ -14,19 +14,19 @@ using IDType = std::size_t;
 class BaseSSA {
 public:
     virtual ~BaseSSA() = default;
-    // virtual void Destroy() = 0;
+    // virtual void Destroy() = 0;   // destroy all of the objects
 };
 
 using SSARef = BaseSSA *;
-using SSAPtr = std::unique_ptr<BaseSSA>;
+using SSAPtr = std::shared_ptr<BaseSSA>;
 using SSAPtrList = std::vector<SSAPtr>;
 
 class BlockSSA : public BaseSSA {
 public:
     BlockSSA(IDType id, SSAPtrList body) : id_(id), body_(std::move(body)) {}
 
-    void set_next(SSAPtr next) { next_ = std::move(next); }
-    void AddPred(SSAPtr pred) { preds_.push_back(std::move(pred)); }
+    void set_next(SSAPtr next) { next_ = next; }
+    void AddPred(SSAPtr pred) { preds_.push_back(pred); }
     const SSAPtrList &preds() const { return preds_; }
     IDType id() const { return id_; }
 
@@ -71,11 +71,17 @@ private:
 class PhiSSA : public BaseSSA {
 public:
     PhiSSA(IDType block_id) : block_id_(block_id) {}
-    PhiSSA(SSAPtrList opr_list) : opr_list_(std::move(opr_list)) {}
+    // PhiSSA(SSAPtrList opr_list) : opr_list_(std::move(opr_list)) {}
     
+    void AddOpr(SSAPtr opr) { opr_list_.push_back(opr); }
+    void AddUser(SSAPtr user) { users_.push_back(user); }
+    void ReplaceBy(SSAPtr &ssa) {
+        // TODO
+    }
+
     const SSAPtrList &users() const { return users_; }
-    void AddOpr(SSAPtr opr) { opr_list_.push_back(std::move(opr)); }
-    void AddUser(SSAPtr user) { users_.push_back(std::move(user)); }
+    const SSAPtrList &operands() const { return opr_list_; }
+    IDType block_id() const { return block_id_; }
 
 private:
     IDType block_id_;
@@ -85,8 +91,8 @@ private:
 class QuadSSA : public BaseSSA {
 public:
     QuadSSA(SSAPtr dest, Operator op, SSAPtr opr1, SSAPtr opr2)
-            : dest_(std::move(dest)), op_(op),
-              opr1_(std::move(opr1)), opr2_(std::move(opr2)) {}
+            : dest_(dest), op_(op),
+              opr1_(opr1), opr2_(opr2) {}
 
 private:
     SSAPtr dest_, opr1_, opr2_;
@@ -95,7 +101,7 @@ private:
 
 class JumpSSA : public BaseSSA {
 public:
-    JumpSSA(SSAPtr block) : block_(std::move(block)) {}
+    JumpSSA(SSAPtr block) : block_(block) {}
 
 private:
     SSAPtr block_;
