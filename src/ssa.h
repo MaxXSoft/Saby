@@ -7,7 +7,7 @@
 #include <string>
 #include <cstddef>
 
-#include "lexer.h"
+#include "lexer.h"   // QuadSSA -> Operator
 
 using IDType = std::size_t;
 
@@ -44,9 +44,9 @@ public:
 
     SSAPtr Duplicate() {
         switch (type_) {
-            case ValueType::Number: return std::make_unique<ValueSSA>(num_val_);
-            case ValueType::Decimal: return std::make_unique<ValueSSA>(dec_val_);
-            case ValueType::String: return std::make_unique<ValueSSA>(str_val_);
+            case ValueType::Number: return std::make_shared<ValueSSA>(num_val_);
+            case ValueType::Decimal: return std::make_shared<ValueSSA>(dec_val_);
+            case ValueType::String: return std::make_shared<ValueSSA>(str_val_);
         }
     }
 

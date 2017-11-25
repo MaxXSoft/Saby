@@ -8,7 +8,7 @@
 class IRBuilder {
 public:
     IRBuilder() : current_block_(0) /*, current_def_({{nullptr}}) */ {}
-    ~IRBuilder() {}
+    ~IRBuilder() { Release(); }
 
     SSAPtr NewBlock(SSAPtrList body);
     SSAPtr NewVariable();
