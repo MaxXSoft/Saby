@@ -25,7 +25,20 @@ using SSAPtrList = std::vector<SSAPtr>;
 
 class UseSSA : public BaseSSA {
 protected:
-    // SSAPtr 
+    SSAPtr reference_;
+};
+
+class DefSSA : public BaseSSA {
+protected:
+    IDType id_;
+    SSAPtrList users_;
+};
+
+class PhiSSA : public BaseSSA {
+public:
+    //
+private:
+    //
 };
 
 #endif // SABY_SSA_H_
