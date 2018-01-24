@@ -26,7 +26,7 @@ private:
     
     IDType current_block_;
     std::vector<SSAPtrList> current_def_, incomplete_phis_;
-    std::vector<std::unique_ptr<BlockSSA>> blocks_;
+    std::vector<std::shared_ptr<BlockSSA>> blocks_;
     std::vector<IDType> sealed_blocks_;
 };
 

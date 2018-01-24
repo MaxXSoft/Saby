@@ -1,5 +1,7 @@
 // reference: Simple and Efficient Construction of Static Single Assignment Form
 
+// TODO: rewrite this file
+
 #include "irbuilder.h"
 
 #include <memory>
@@ -8,10 +10,7 @@
 
 namespace {
 
-template <typename T>
-inline T *SSACast(const SSAPtr &ptr) {
-    return dynamic_cast<T *>(ptr.get());
-}
+//
 
 }
 
@@ -114,5 +113,14 @@ void IRBuilder::SealBlock(SSAPtr &block) {
 }
 
 void IRBuilder::Release() {
-    //
+    auto ResetList = [](auto &list) {
+        for (auto &&i : list) {
+            for (auto &&j : i) {
+                j.reset();
+            }
+        }
+    };
+    ResetList(current_def_);
+    ResetList(incomplete_phis_);
+    for (auto &&it : blocks_) it.reset();
 }
