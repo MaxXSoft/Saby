@@ -93,7 +93,7 @@ public:
     void AddOpr(SSAPtr opr) {
         opr_list_.push_back(opr);
         auto def = SSACast<DefSSA>(opr);
-        if (def) def->AddUser(this);
+        if (def) def->AddUser(SSAPtr(this));   // unsafe usage
     }
 
     void ReplaceBy(SSAPtr &ssa) {
