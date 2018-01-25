@@ -3,64 +3,22 @@
 
 #include <memory>
 #include <utility>
-#include <vector>
 #include <string>
 #include <cstddef>
 
-#include "lexer.h"   // QuadSSA -> Operator
+#include "def_use.h"
+#include "lexer.h"
 
 using IDType = std::size_t;
 
-class BaseSSA {
+class ValueSSA : public Value {
 public:
-    virtual ~BaseSSA() = default;
-    // virtual void Generate() = 0;
-
-    void set_next(std::shared_ptr<BaseSSA> next) { next_ = next; }
-
-protected:
-    std::shared_ptr<BaseSSA> next_;
-};
-
-using SSARef = BaseSSA *;
-using SSAPtr = std::shared_ptr<BaseSSA>;
-using SSAPtrList = std::vector<SSAPtr>;
-
-template <typename T>
-inline T *SSACast(const SSAPtr &ptr) {
-    return dynamic_cast<T *>(ptr.get());
-}
-
-class UseSSA : public BaseSSA {
-public:
-    void set_ref(SSAPtr ref) { ref_ = ref; }
-    const SSAPtr &ref() const { return ref_; }
-
-protected:
-    UseSSA(SSAPtr ref) : ref_(ref) {}
-
-    SSAPtr ref_;
-};
-
-using UsePtr = std::shared_ptr<UseSSA>;
-
-class DefSSA : public BaseSSA {
-public:
-    void AddUser(SSAPtr user) { users_.push_back(user); }
-    const SSAPtrList &users() const { return users_; }
-
-protected:
-    DefSSA(IDType id) : id_(id) {}
-
-    IDType id_;
-    SSAPtrList users_;
-};
-
-class ValueSSA : public BaseSSA {
-public:
-    ValueSSA(long long value) : num_val_(value), type_(ValueType::Number) {}
-    ValueSSA(double value) : dec_val_(value), type_(ValueType::Decimal) {}
-    ValueSSA(const std::string &value) : str_val_(value), type_(ValueType::String) {}
+    ValueSSA(long long value)
+            : Value("$num"), num_val_(value), type_(ValueType::Number) {}
+    ValueSSA(double value)
+            : Value("$dec"), dec_val_(value), type_(ValueType::Decimal) {}
+    ValueSSA(const std::string &value)
+            : Value("$str"), str_val_(value), type_(ValueType::String) {}
 
     SSAPtr Duplicate() {
         switch (type_) {
@@ -80,85 +38,56 @@ private:
     std::string str_val_;
 };
 
-class UndefSSA : public BaseSSA {
+class UndefSSA : public Value {
 public:
-    UndefSSA() {}
+    UndefSSA() : Value("$und") {}
 };
 
-// TODO: rewrite PhiSSA, and redesign use-def chain in a elegant way
-class PhiSSA : public DefSSA {
+class PhiSSA : public User {
 public:
-    PhiSSA(IDType block_id) : DefSSA(block_id) {}
+    PhiSSA(IDType block_id) : User("phi"), block_id_(block_id) {}
 
-    void AddOpr(SSAPtr opr) {
-        opr_list_.push_back(opr);
-        auto def = SSACast<DefSSA>(opr);
-        if (def) def->AddUser(SSAPtr(this));   // unsafe usage
-    }
-
+    void AddOperand(SSAPtr opr) { push_back(Use(opr, *this)); }
     void ReplaceBy(SSAPtr &ssa) {
-        for (const auto &it : users_) {
-            auto use = SSACast<UseSSA>(it);
-            if (use) {
-                // UseSSA pointer
-                use->set_ref(ssa);
-            }
-            else {
-                auto phi = SSACast<PhiSSA>(it);
-                // Phi node pointer
-                if (phi) phi->ReplaceOpr(this, ssa);
-            }
-        }
+        // TODO
     }
 
-    const SSAPtrList &operands() const { return opr_list_; }
-    IDType block_id() const { return id_; }
+    IDType block_id() const { return block_id_; }
 
 private:
-    void ReplaceOpr(PhiSSA *find, SSAPtr &ssa) {
-        for (auto &&it : opr_list_) {
-            if (it.get() == find) it = ssa;
-        }
-    }
-
-    SSAPtrList opr_list_;
+    IDType block_id_;
 };
 
-class BlockSSA : public DefSSA {
+class BlockSSA : public User {
 public:
-    BlockSSA(IDType id, SSAPtr body) : DefSSA(id), body_(body) {}
+    BlockSSA(IDType id, SSAPtr body) : User("block:"), id_(id), body_(body) {}
 
-    void AddPred(SSAPtr pred) { preds_.push_back(pred); }
+    // TODO
+    // void AddPred(SSAPtr pred) { push_back(Use(pred, *this)); }
+
     IDType id() const { return id_; }
-    const SSAPtrList &preds() const { return preds_; }
 
 private:
+    IDType id_;
     SSAPtr body_;
-    SSAPtrList preds_;
 };
 
-class VarDefSSA : public DefSSA {
+class JumpSSA : public User {
 public:
-    VarDefSSA(IDType id) : DefSSA(id) {}
+    JumpSSA(std::shared_ptr<BlockSSA> block) : User("jump->") {
+        push_back(Use(block, *this));
+    }
 };
 
-class VarUseSSA : public UseSSA {
+class QuadSSA : public User {
 public:
-    VarUseSSA(SSAPtr ref) : UseSSA(ref) {}
-};
-
-class JumpSSA : public UseSSA {
-public:
-    JumpSSA(std::shared_ptr<BlockSSA> block) : UseSSA(block) {}
-};
-
-class QuadSSA : public UseSSA {
-public:
-    QuadSSA(Operator op, UsePtr opr1, UsePtr opr2)
-            : UseSSA(opr1), op_(op), opr1_(opr1), opr2_(opr2) {}
+    QuadSSA(Operator op, SSAPtr opr1, SSAPtr opr2) : User("inst"), op_(op) {
+        reserve(2);
+        push_back(Use(opr1, *this));
+        push_back(Use(opr2, *this));
+    }
 
 private:
-    UsePtr opr1_, opr2_;
     Operator op_;
 };
 

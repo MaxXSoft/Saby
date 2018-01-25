@@ -12,36 +12,41 @@
 class Value;
 class User;
 
+using SSAPtr = std::shared_ptr<Value>;
+using SSAPtrList = std::vector<SSAPtr>;
+
 class Use {
 public:
-    Use(Value &value, User &user) : value_(value), user_(user) {
-        value_.AddUse(*this);
+    Use(SSAPtr value, User &user) : value_(value), user_(user) {
+        if (value_) value_->AddUse(this);
     }
-    virtual ~Use() { value_.RemoveUse(this); }
+    ~Use() { if (value_) value_->RemoveUse(this); }
 
-    Value &value() const { return value_; }
+    SSAPtr value() const { return value_; }
     User &user() const { return user_; }
 
 private:
-    Value &value_;   // Value --Use-> User
+    SSAPtr value_;   // Value --Use-> User
     User &user_;
 };
 
 class Value {
 public:
-    using ListIter = std::list<Use>::iterator;
+    using ListIter = std::list<Use *>::iterator;
 
-    Value() {}
+    // in order to print or debug the use-def chain
     Value(const std::string &name) : name_(name) {}
     virtual ~Value() = default;
 
     // TODO: whether to allow duplicate elements?
     // Thinking: allow, consider the following situation
     //     var a = 1; var b = a + a
-    void AddUse(Use &use) { uses_.push_back(use); }
+    void AddUse(Use *use) { uses_.push_back(use); }
+    // TODO: consider moving the impl to a separate file
+    // TODO: consider if can cause memory error
     void RemoveUse(Use *use) {
         for (auto it = uses_.begin(); it != uses_.end(); ) {
-            if (&*it == use) {
+            if (*it == use) {
                 it = uses_.erase(it);
             }
             else {
@@ -49,6 +54,8 @@ public:
             }
         }
     }
+
+    // virtual void Generate() = 0;
 
     ListIter begin() { return uses_.begin(); }
     ListIter end() { return uses_.end(); }
@@ -59,7 +66,7 @@ public:
     const std::string &name() const { return name_; }
 
 private:
-    std::list<Use> uses_;   // doubly-linked list for Use
+    std::list<Use *> uses_;   // doubly-linked list for Use
     std::string name_;   // TODO: remove?
 };
 
@@ -67,7 +74,7 @@ class User : public Value {
 public:
     using OpIter = std::vector<Use>::iterator;
 
-    User() {}
+    User(const std::string &name) : Value(name) {}
 
     void reserve(std::size_t size) { operands_.reserve(size); }
     void push_back(Use &&use) { operands_.push_back(use); }
