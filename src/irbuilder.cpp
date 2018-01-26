@@ -47,10 +47,10 @@ SSAPtr IRBuilder::ReadVariableRecursive(IDType var_id, IDType block_id) {
         value = std::make_shared<PhiSSA>(block_id);
         incomplete_phis_[block_id][var_id] = value;
     }
-    else if (blocks_[block_id]->preds().size() == 1) {
+    else if (blocks_[block_id]->size() == 1) {
         // optimize the common case of one predecessor: no phi needed
-        auto pred_0 = blocks_[block_id]->preds()[0];
-        value = ReadVariable(var_id, SSACast<BlockSSA>(pred_0)->id());
+        auto pred_0 = (*blocks_[block_id])[0].value();
+        value = ReadVariable(var_id,SSACast<BlockSSA>(pred_0)->id());
     }
     else {
         // break potential cycles with operandless phi
@@ -65,11 +65,11 @@ SSAPtr IRBuilder::ReadVariableRecursive(IDType var_id, IDType block_id) {
 SSAPtr IRBuilder::AddPhiOperands(IDType var_id, SSAPtr &phi) {
     auto phi_ptr = SSACast<PhiSSA>(phi);
     auto block_id = phi_ptr->block_id();
-    auto preds = blocks_[block_id]->preds();
+    auto preds = *blocks_[block_id];
     // determine operands from predecessors
     for (const auto &pred : preds) {
-        auto block_ptr = SSACast<BlockSSA>(pred);
-        phi_ptr->AddOpr(ReadVariable(var_id, block_ptr->id()));
+        auto block_ptr = SSACast<BlockSSA>(pred.value());
+        phi_ptr->AddOperand(ReadVariable(var_id, block_ptr->id()));
     }
     return TryRemoveTrivialPhi(phi);
 }
@@ -77,30 +77,29 @@ SSAPtr IRBuilder::AddPhiOperands(IDType var_id, SSAPtr &phi) {
 SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
     SSAPtr same = nullptr;
     auto phi_ptr = SSACast<PhiSSA>(phi);
-    for (const auto &op : phi_ptr->operands()) {
+    for (const auto &op : *phi_ptr) {
         // unique value or self−reference
-        if (op == same || op == phi) continue;
+        auto value = op.value();
+        if (value == same || value == phi) continue;
         // the phi merges at least two values: not trivial
         if (same != nullptr) return phi;
-        same = op;
+        same = value;
     }
     // the phi is unreachable or in the start block
     if (same == nullptr) same = std::make_shared<UndefSSA>();
     // remember all users except the phi itself
-    auto users = phi_ptr->users();
-    for (auto &&it : users) {
-        if (it == phi) {
-            it = users.back();
-            users.pop_back();
-            break;
-        }
+    std::vector<User *> users;
+    for (const auto &it : *phi) {
+        auto user = it->user();
+        if (user != phi_ptr) users.push_back(user);
     }
     // reroute all uses of phi to same and remove phi
     phi_ptr->ReplaceBy(same);
     // try to recursively remove all phi users, 
     // which might have become trivial
-    for (const auto &use : users) {
-        if (SSACast<PhiSSA>(use) != nullptr) TryRemoveTrivialPhi(use);
+    for (const auto &user : users) {
+        // TODO
+        if (SSACast<PhiSSA>(user)) TryRemoveTrivialPhi(user);
     }
     return same;
 }
@@ -110,6 +109,7 @@ void IRBuilder::SealBlock(SSAPtr &block) {
     for (const auto &phi : incomplete_phis_[block_id]) {
         // TODO
     }
+    sealed_blocks_.push_back(block_id);
 }
 
 void IRBuilder::Release() {
@@ -118,9 +118,12 @@ void IRBuilder::Release() {
             for (auto &&j : i) {
                 j.reset();
             }
+            i.clear();
         }
+        list.clear();
     };
     ResetList(current_def_);
     ResetList(incomplete_phis_);
     for (auto &&it : blocks_) it.reset();
+    blocks_.clear();
 }

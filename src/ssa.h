@@ -47,9 +47,12 @@ class PhiSSA : public User {
 public:
     PhiSSA(IDType block_id) : User("phi"), block_id_(block_id) {}
 
-    void AddOperand(SSAPtr opr) { push_back(Use(opr, *this)); }
+    void AddOperand(SSAPtr opr) { push_back(Use(opr, this)); }
     void ReplaceBy(SSAPtr &ssa) {
-        // TODO
+        auto value = dynamic_cast<Value *>(this);
+        for (auto &&use : value) {
+            use->set_value(ssa);   // TODO: test
+        }
     }
 
     IDType block_id() const { return block_id_; }
@@ -63,7 +66,7 @@ public:
     BlockSSA(IDType id, SSAPtr body) : User("block:"), id_(id), body_(body) {}
 
     // TODO
-    // void AddPred(SSAPtr pred) { push_back(Use(pred, *this)); }
+    void AddPred(SSAPtr pred) { push_back(Use(pred, this)); }
 
     IDType id() const { return id_; }
 
@@ -75,7 +78,7 @@ private:
 class JumpSSA : public User {
 public:
     JumpSSA(std::shared_ptr<BlockSSA> block) : User("jump->") {
-        push_back(Use(block, *this));
+        push_back(Use(block, this));
     }
 };
 
@@ -83,8 +86,8 @@ class QuadSSA : public User {
 public:
     QuadSSA(Operator op, SSAPtr opr1, SSAPtr opr2) : User("inst"), op_(op) {
         reserve(2);
-        push_back(Use(opr1, *this));
-        push_back(Use(opr2, *this));
+        push_back(Use(opr1, this));
+        push_back(Use(opr2, this));
     }
 
 private:

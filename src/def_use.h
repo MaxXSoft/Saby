@@ -15,19 +15,35 @@ class User;
 using SSAPtr = std::shared_ptr<Value>;
 using SSAPtrList = std::vector<SSAPtr>;
 
+template <typename T>
+inline T *SSACast(const SSAPtr &ptr) {
+    return dynamic_cast<T *>(ptr.get());
+}
+
+template <typename T>
+inline T *SSACast(Value *ptr) {
+    return dynamic_cast<T *>(ptr);
+}
+
 class Use {
 public:
-    Use(SSAPtr value, User &user) : value_(value), user_(user) {
+    Use(SSAPtr value, User *user) : value_(value), user_(user) {
         if (value_) value_->AddUse(this);
     }
     ~Use() { if (value_) value_->RemoveUse(this); }
 
+    void set_value(SSAPtr &value) {
+        if (value_) value_->RemoveUse(this);
+        value_ = value;
+        if (value_) value_->AddUse(this);
+    }
+
     SSAPtr value() const { return value_; }
-    User &user() const { return user_; }
+    User *user() const { return user_; }
 
 private:
-    SSAPtr value_;   // Value --Use-> User
-    User &user_;
+    SSAPtr value_;   // User --Use-> Value
+    User *user_;
 };
 
 class Value {
@@ -67,7 +83,7 @@ public:
 
 private:
     std::list<Use *> uses_;   // doubly-linked list for Use
-    std::string name_;   // TODO: remove?
+    std::string name_;
 };
 
 class User : public Value {
