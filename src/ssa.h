@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <utility>
+#include <list>
 #include <string>
 #include <cstddef>
 
@@ -14,11 +15,11 @@ using IDType = std::size_t;
 class ValueSSA : public Value {
 public:
     ValueSSA(long long value)
-            : Value("$num"), num_val_(value), type_(ValueType::Number) {}
+            : Value("#num"), num_val_(value), type_(ValueType::Number) {}
     ValueSSA(double value)
-            : Value("$dec"), dec_val_(value), type_(ValueType::Decimal) {}
+            : Value("#dec"), dec_val_(value), type_(ValueType::Decimal) {}
     ValueSSA(const std::string &value)
-            : Value("$str"), str_val_(value), type_(ValueType::String) {}
+            : Value("#str"), str_val_(value), type_(ValueType::String) {}
 
     SSAPtr Duplicate() {
         switch (type_) {
@@ -40,7 +41,7 @@ private:
 
 class UndefSSA : public Value {
 public:
-    UndefSSA() : Value("$und") {}
+    UndefSSA() : Value("#und") {}
 };
 
 class PhiSSA : public User {
@@ -50,34 +51,41 @@ public:
     void AddOperand(SSAPtr opr) { push_back(Use(opr, this)); }
     void ReplaceBy(SSAPtr &ssa) {
         auto value = dynamic_cast<Value *>(this);
-        for (auto &&use : value) {
+        for (auto &&use : *value) {
             use->set_value(ssa);   // TODO: test
         }
     }
 
     IDType block_id() const { return block_id_; }
 
+    void set_ref(const std::shared_ptr<PhiSSA> &phi) { ref_ = phi; }
+    const SSAPtr &ref() const { return ref_.lock(); }
+
 private:
     IDType block_id_;
+    std::weak_ptr<PhiSSA> ref_;
 };
 
 class BlockSSA : public User {
 public:
-    BlockSSA(IDType id, SSAPtr body) : User("block:"), id_(id), body_(body) {}
+    BlockSSA(IDType id)
+            : User("block:"), id_(id) {}
 
-    // TODO
-    void AddPred(SSAPtr pred) { push_back(Use(pred, this)); }
+    void AddPred(SSAPtr pred) { preds_.push_back(pred); }
+    void AddValue(SSAPtr value) { push_back(Use(value, this)); }
 
     IDType id() const { return id_; }
+    const std::list<SSAPtr> &preds() const { return preds_; }
 
 private:
     IDType id_;
-    SSAPtr body_;
+    std::list<SSAPtr> preds_;
 };
 
 class JumpSSA : public User {
 public:
     JumpSSA(std::shared_ptr<BlockSSA> block) : User("jump->") {
+        reserve(1);
         push_back(Use(block, this));
     }
 };
@@ -92,6 +100,19 @@ public:
 
 private:
     Operator op_;
+};
+
+class VariableSSA : public User {
+public:
+    VariableSSA(IDType id, SSAPtr value) : User("$var") {
+        reserve(1);
+        push_back(Use(value, this));
+    }
+
+    IDType id() const { return id_; }
+
+private:
+    IDType id_;
 };
 
 #endif // SABY_SSA_H_

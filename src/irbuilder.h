@@ -7,11 +7,11 @@
 
 class IRBuilder {
 public:
-    IRBuilder() : current_block_(0) /*, current_def_({{nullptr}}) */ {}
+    IRBuilder() : current_block_(0), current_var_(0) {}
     ~IRBuilder() { Release(); }
 
-    SSAPtr NewBlock(SSAPtrList body);
-    SSAPtr NewVariable();
+    SSAPtr NewBlock();
+    SSAPtr NewVariable(SSAPtr value);
 
     void WriteVariable(IDType var_id, IDType block_id, SSAPtr &value);
     SSAPtr ReadVariable(IDType var_id, IDType block_id);
@@ -24,7 +24,7 @@ private:
     SSAPtr AddPhiOperands(IDType var_id, SSAPtr &phi);
     SSAPtr TryRemoveTrivialPhi(const SSAPtr &phi);
     
-    IDType current_block_;
+    IDType current_block_, current_var_;
     std::vector<SSAPtrList> current_def_, incomplete_phis_;
     std::vector<std::shared_ptr<BlockSSA>> blocks_;
     std::vector<IDType> sealed_blocks_;

@@ -14,15 +14,13 @@ namespace {
 
 }
 
-// SSAPtr IRBuilder::NewBlock(SSAPtrList body) {
-//     auto block = std::make_shared<BlockSSA>(current_block_++, std::move(body));
-//     var_id_.push_back(0);
-//     return std::move(block);
-// }
+SSAPtr IRBuilder::NewBlock() {
+    return std::make_shared<BlockSSA>(current_block_++);
+}
 
-// SSAPtr IRBuilder::NewVariable() {
-//     return std::make_shared<VariableSSA>(var_id_[current_block_]++);
-// }
+SSAPtr IRBuilder::NewVariable(SSAPtr value) {
+    return std::make_shared<VariableSSA>(current_var_++, value);
+}
 
 void IRBuilder::WriteVariable(IDType var_id, IDType block_id, SSAPtr &value) {
     if (block_id < current_def_.size() && var_id < current_def_[block_id].size()) {
@@ -44,17 +42,21 @@ SSAPtr IRBuilder::ReadVariableRecursive(IDType var_id, IDType block_id) {
     auto it = std::find(sealed_blocks_.begin(), sealed_blocks_.end(), block_id);
     if (it == sealed_blocks_.end()) {
         // incomplete CFG
-        value = std::make_shared<PhiSSA>(block_id);
+        auto phi = std::make_shared<PhiSSA>(block_id);
+        value = phi;
+        SSACast<PhiSSA>(value)->set_ref(phi);
         incomplete_phis_[block_id][var_id] = value;
     }
-    else if (blocks_[block_id]->size() == 1) {
+    else if (blocks_[block_id]->preds().size() == 1) {
         // optimize the common case of one predecessor: no phi needed
-        auto pred_0 = (*blocks_[block_id])[0].value();
+        auto pred_0 = blocks_[block_id]->preds().front();
         value = ReadVariable(var_id,SSACast<BlockSSA>(pred_0)->id());
     }
     else {
         // break potential cycles with operandless phi
-        value = std::make_shared<PhiSSA>(block_id);
+        auto phi = std::make_shared<PhiSSA>(block_id);
+        value = phi;
+        SSACast<PhiSSA>(value)->set_ref(phi);
         WriteVariable(var_id, block_id, value);
         value = AddPhiOperands(var_id, value);
     }
@@ -65,10 +67,10 @@ SSAPtr IRBuilder::ReadVariableRecursive(IDType var_id, IDType block_id) {
 SSAPtr IRBuilder::AddPhiOperands(IDType var_id, SSAPtr &phi) {
     auto phi_ptr = SSACast<PhiSSA>(phi);
     auto block_id = phi_ptr->block_id();
-    auto preds = *blocks_[block_id];
+    auto preds = blocks_[block_id]->preds();
     // determine operands from predecessors
     for (const auto &pred : preds) {
-        auto block_ptr = SSACast<BlockSSA>(pred.value());
+        auto block_ptr = SSACast<BlockSSA>(pred);
         phi_ptr->AddOperand(ReadVariable(var_id, block_ptr->id()));
     }
     return TryRemoveTrivialPhi(phi);
@@ -98,16 +100,19 @@ SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
     // try to recursively remove all phi users, 
     // which might have become trivial
     for (const auto &user : users) {
-        // TODO
-        if (SSACast<PhiSSA>(user)) TryRemoveTrivialPhi(user);
+        // TODO: test
+        auto phi_user = SSACast<PhiSSA>(user);
+        if (phi_user) TryRemoveTrivialPhi(phi_user->ref());
     }
     return same;
 }
 
 void IRBuilder::SealBlock(SSAPtr &block) {
     auto block_id = SSACast<BlockSSA>(block)->id();
-    for (const auto &phi : incomplete_phis_[block_id]) {
-        // TODO
+    auto &phi_list = incomplete_phis_[block_id];
+    // TODO: test
+    for (int id = 0; id < phi_list.size(); ++id) {
+        AddPhiOperands(id, phi_list[id]);
     }
     sealed_blocks_.push_back(block_id);
 }
