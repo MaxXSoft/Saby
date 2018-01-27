@@ -197,6 +197,9 @@ TypeValue Analyzer::AnalyzeCall(TypeValue callee, const TypeList &args) {
 }
 
 TypeValue Analyzer::AnalyzeFunc(const TypeList &args, TypeValue ret_type) {
+    if (args.size() > kFuncMaxArgNum) {
+        return PrintError("the number of arguments exceeds the limit");
+    }
     auto func_type = GetFunctionType(args, ret_type);
     if (func_type == kTypeError) return PrintError("invalid function definition");
     env_->Insert("@", func_type);   // insert '@' into current environment
