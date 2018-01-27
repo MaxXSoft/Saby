@@ -29,6 +29,8 @@ public:
         }
     }
 
+    void Print() override;
+
 private:
     enum class ValueType : char {
         Number, Decimal, String
@@ -42,6 +44,8 @@ private:
 class UndefSSA : public Value {
 public:
     UndefSSA() : Value("#und") {}
+
+    void Print() override;
 };
 
 class PhiSSA : public User {
@@ -56,9 +60,11 @@ public:
         }
     }
 
-    IDType block_id() const { return block_id_; }
+    void Print() override;
 
     void set_ref(const std::shared_ptr<PhiSSA> &phi) { ref_ = phi; }
+
+    IDType block_id() const { return block_id_; }
     const SSAPtr &ref() const { return ref_.lock(); }
 
 private:
@@ -74,6 +80,8 @@ public:
     void AddPred(SSAPtr pred) { preds_.push_back(pred); }
     void AddValue(SSAPtr value) { push_back(Use(value, this)); }
 
+    void Print() override;
+
     IDType id() const { return id_; }
     const std::list<SSAPtr> &preds() const { return preds_; }
 
@@ -88,15 +96,25 @@ public:
         reserve(1);
         push_back(Use(block, this));
     }
+
+    void Print() override;
 };
 
 class QuadSSA : public User {
 public:
     QuadSSA(Operator op, SSAPtr opr1, SSAPtr opr2) : User("inst"), op_(op) {
-        reserve(2);
-        push_back(Use(opr1, this));
-        push_back(Use(opr2, this));
+        if (opr2) {
+            reserve(2);
+            push_back(Use(opr1, this));
+            push_back(Use(opr2, this));
+        }
+        else {
+            reserve(1);
+            push_back(Use(opr1, this));
+        }
     }
+
+    void Print() override;
 
 private:
     Operator op_;
@@ -104,10 +122,17 @@ private:
 
 class VariableSSA : public User {
 public:
-    VariableSSA(IDType id, SSAPtr value) : User("$var") {
-        reserve(1);
-        push_back(Use(value, this));
+    VariableSSA(IDType id, SSAPtr value) : User("$var"), id_(id) {
+        if (value) {
+            reserve(1);
+            push_back(Use(value, this));
+        }
+        else {
+            reserve(0);
+        }
     }
+
+    void Print() override;
 
     IDType id() const { return id_; }
 

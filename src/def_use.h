@@ -71,7 +71,7 @@ public:
         }
     }
 
-    // virtual void Generate() = 0;
+    virtual void Print() = 0;
 
     ListIter begin() { return uses_.begin(); }
     ListIter end() { return uses_.end(); }

@@ -5,6 +5,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "analyzer.h"
+#include "irbuilder.h"
 // #include "generator.h"
 #include "xstl/argh.h"
 
@@ -62,6 +63,8 @@ int main(int argc, const char *argv[]) {
     // -h -v --help --version
 
     argh.ParseArguments(argc, argv);
+
+    //
 
     return 0;
 }
