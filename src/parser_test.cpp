@@ -1,6 +1,9 @@
 #include <iostream>
 
+#include "lexer.h"
 #include "parser.h"
+#include "analyzer.h"
+#include "irbuilder.h"
 
 int main(int argc, const char *argv[]) {
     std::string lib_path(argv[0]), sym_path(argv[1]);
@@ -11,6 +14,7 @@ int main(int argc, const char *argv[]) {
     Lexer lexer(in);
     Parser parser(lexer);
     Analyzer analyzer(lexer);
+    IRBuilder irb;
 
     analyzer.set_lib_path(lib_path);
     analyzer.set_sym_path(sym_path);

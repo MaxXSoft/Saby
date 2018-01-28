@@ -18,13 +18,26 @@ SSAPtr IRBuilder::NewBlock() {
     return std::make_shared<BlockSSA>(current_block_++);
 }
 
-SSAPtr IRBuilder::NewVariable(SSAPtr value) {
-    return std::make_shared<VariableSSA>(current_var_++, value);
+SSAPtr IRBuilder::NewVariable(SSAPtr &value) {
+    auto var_id = current_var_++;
+    // TODO
+    if (value) WriteVariable(var_id, current_block_, value);
+    return std::make_shared<VariableSSA>(var_id, value);
 }
 
 void IRBuilder::WriteVariable(IDType var_id, IDType block_id, SSAPtr &value) {
-    if (block_id < current_def_.size() && var_id < current_def_[block_id].size()) {
-        current_def_[block_id][var_id] = value;
+    if (block_id < current_def_.size()) {
+        auto &current_var_list = current_def_[block_id];
+        if (var_id < current_var_list.size()) {
+            current_var_list[var_id] = value;
+        }
+        else if (var_id == current_var_list.size()) {
+            current_var_list.push_back(value);
+        }
+    }
+    else if (block_id == current_def_.size()) {
+        current_def_.push_back({});
+        WriteVariable(var_id, block_id, value);
     }
 }
 
@@ -109,12 +122,15 @@ SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
 
 void IRBuilder::SealBlock(SSAPtr &block) {
     auto block_id = SSACast<BlockSSA>(block)->id();
-    auto &phi_list = incomplete_phis_[block_id];
-    // TODO: test
-    for (int id = 0; id < phi_list.size(); ++id) {
-        AddPhiOperands(id, phi_list[id]);
+    auto it = std::find(sealed_blocks_.begin(), sealed_blocks_.end(), block_id);
+    if (it == sealed_blocks_.end()) {
+        auto &phi_list = incomplete_phis_[block_id];
+        // TODO: test
+        for (int id = 0; id < phi_list.size(); ++id) {
+            AddPhiOperands(id, phi_list[id]);
+        }
+        sealed_blocks_.push_back(block_id);
     }
-    sealed_blocks_.push_back(block_id);
 }
 
 void IRBuilder::Release() {
@@ -131,4 +147,5 @@ void IRBuilder::Release() {
     ResetList(incomplete_phis_);
     for (auto &&it : blocks_) it.reset();
     blocks_.clear();
+    current_block_ = current_var_ = 0;
 }
