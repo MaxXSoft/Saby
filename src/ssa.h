@@ -7,10 +7,9 @@
 #include <string>
 #include <cstddef>
 
+#include "type.h"
 #include "def_use.h"
-#include "lexer.h"
-
-using IDType = std::size_t;
+#include "lexer.h"   // 'Operator' in QuadSSA
 
 class ValueSSA : public Value {
 public:
@@ -39,6 +38,17 @@ private:
     long long num_val_;
     double dec_val_;
     std::string str_val_;
+};
+
+// used to represent arguments in the body of a function
+class ArgHolderSSA : public Value {
+public:
+    ArgHolderSSA(IDType arg_id) : Value("#arg"), arg_id_(arg_id) {}
+
+    void Print() override;
+
+private:
+    IDType arg_id_;
 };
 
 class UndefSSA : public Value {
@@ -75,18 +85,20 @@ private:
 class BlockSSA : public User {
 public:
     BlockSSA(IDType id)
-            : User("block:"), id_(id) {}
+            : User("block:"), id_(id), is_func_(false) {}
 
     void AddPred(SSAPtr pred) { preds_.push_back(pred); }
     void AddValue(SSAPtr value) { push_back(Use(value, this)); }
 
     void Print() override;
 
+    void set_is_func(bool is_func) { is_func_ = is_func; }
     IDType id() const { return id_; }
     const std::list<SSAPtr> &preds() const { return preds_; }
 
 private:
     IDType id_;
+    bool is_func_;
     std::list<SSAPtr> preds_;
 };
 
@@ -95,6 +107,21 @@ public:
     JumpSSA(std::shared_ptr<BlockSSA> block) : User("jump->") {
         reserve(1);
         push_back(Use(block, this));
+    }
+
+    void Print() override;
+};
+
+class CallSSA : public User {
+public:
+    CallSSA(std::shared_ptr<BlockSSA> block)
+            : User("call") {
+        reserve(kFuncMaxArgNum + 1);
+        push_back(Use(block, this));
+    }
+
+    void AddArgument(SSAPtr value) {
+        if (size() <= kFuncMaxArgNum + 1) push_back(Use(value, this));
     }
 
     void Print() override;

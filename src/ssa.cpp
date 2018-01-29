@@ -22,6 +22,10 @@ void ValueSSA::Print() {
     std::cout << ')';
 }
 
+void ArgHolderSSA::Print() {
+    std::cout << name() << '(' << arg_id_ << ')';
+}
+
 void UndefSSA::Print() {
     std::cout << name();
 }
@@ -49,6 +53,19 @@ void JumpSSA::Print() {
     std::cout << name() << "(block: ";
     std::cout << SSACast<BlockSSA>((*this)[0].value())->id();
     std::cout << ')';
+}
+
+void CallSSA::Print() {
+    std::cout << name() << "{(block: ";
+    std::cout << SSACast<BlockSSA>((*this)[0].value())->id();
+    std::cout << "), (";
+    if (size() > 1) {
+        for (int i = 1; i < size(); ++i) {
+            (*this)[i].value()->Print();
+            std::cout << ", ";
+        }
+    }
+    std::cout << "\b\b)}";
 }
 
 void QuadSSA::Print() {
