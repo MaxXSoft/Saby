@@ -19,6 +19,10 @@ public:
 
     void Release();
 
+    std::shared_ptr<BlockSSA> GetCurrentBlock() const {
+        return blocks_[current_block_];
+    }
+
 private:
     SSAPtr ReadVariableRecursive(IDType var_id, IDType block_id);
     SSAPtr AddPhiOperands(IDType var_id, SSAPtr &phi);

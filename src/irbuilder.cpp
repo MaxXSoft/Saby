@@ -20,8 +20,7 @@ SSAPtr IRBuilder::NewBlock() {
 
 SSAPtr IRBuilder::NewVariable(SSAPtr &value) {
     auto var_id = current_var_++;
-    // TODO
-    if (value) WriteVariable(var_id, current_block_, value);
+    WriteVariable(var_id, current_block_, value);
     return std::make_shared<VariableSSA>(var_id, value);
 }
 
