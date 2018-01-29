@@ -10,7 +10,10 @@
 
 class Environment;
 using EnvPtr = std::shared_ptr<Environment>;
+// variable name -> type info
 using SymbolHash = std::map<std::string, TypeValue>;
+// variable name -> SSA id
+using SymbolID = std::map<std::string, IDType>;
 
 inline EnvPtr MakeEnvironment(EnvPtr outer) {
     return std::make_shared<Environment>(outer);
@@ -30,12 +33,15 @@ public:
     bool SaveEnv(const char *path, const std::vector<std::string> &syms);
     bool LoadEnv(const char *path);
 
+    // used in IR generating process
+    SymbolID &id_table() { return id_table_; }
+
     const EnvPtr &outer() const { return outer_; }
-    // const SymbolHash &table() const { return table_; }
 
 private:
     EnvPtr outer_;
     SymbolHash table_;
+    SymbolID id_table_;
 };
 
 #endif // SABY_SYMBOL_H_

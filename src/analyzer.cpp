@@ -6,10 +6,10 @@
 #include <string>
 #include <vector>
 
+#include "type.h"
+
 namespace {
 
-// just a limit which can simplify code generating
-constexpr int kFuncMaxArgNum = 6;
 constexpr TypeValue kFuncTypeBase = 131;
 
 TypeValue GetFunctionType(const TypeList &args_type, TypeValue ret_type) {
