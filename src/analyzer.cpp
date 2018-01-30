@@ -10,8 +10,6 @@
 
 namespace {
 
-constexpr TypeValue kFuncTypeBase = 131;
-
 TypeValue GetFunctionType(const TypeList &args_type, TypeValue ret_type) {
     if (ret_type == kTypeError) return kTypeError;
     TypeValue func_type = 0;

@@ -19,6 +19,7 @@ constexpr TypeValue kTypeError = -1;
 
 // just a limit which can simplify code generating
 constexpr int kFuncMaxArgNum = 6;
+constexpr TypeValue kFuncTypeBase = 131;
 
 // store the id of SSA
 using IDType = std::size_t;
