@@ -13,6 +13,7 @@ TypeValue IdentifierAST::SemaAnalyze(Analyzer &ana) {
 TypeValue VariableAST::SemaAnalyze(Analyzer &ana) {
     VarTypeList var_type;
     for (const auto &i : defs_) {
+        if (!i.second) return kTypeError;   // initialization list is empty
         var_type.push_back({i.first, i.second->SemaAnalyze(ana)});
     }
     auto ret = ana.AnalyzeVar(var_type, type_);

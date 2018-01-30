@@ -79,17 +79,12 @@ ASTPtr Parser::ParseVarDefinition(int type) {
         if (cur_token_ != kId) return PrintError("expected identifier");
         auto id = lexer_.id_val();
         ASTPtr init_val = nullptr;
-        if (NextToken() != ',') {
-            if (cur_token_ != kOperator && lexer_.op_val() != kAssign) {
-                return PrintError("invalid variable initialization");
-            }
-            NextToken();
-            init_val = ParseExpression();
-            if (cur_token_ == ',') NextToken();
+        if (NextToken() != kOperator || lexer_.op_val() != kAssign) {
+            return PrintError("invalid variable initialization");
         }
-        else {
-            NextToken();   // eat ','
-        }
+        NextToken();
+        init_val = ParseExpression();
+        if (cur_token_ == ',') NextToken();
         defs.push_back(std::make_pair(id, std::move(init_val)));
     }
     return std::make_unique<VariableAST>(std::move(defs), type);
