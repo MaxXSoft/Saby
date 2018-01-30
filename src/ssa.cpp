@@ -53,6 +53,10 @@ void JumpSSA::Print() {
     std::cout << name() << "(block: ";
     std::cout << SSACast<BlockSSA>((*this)[0].value())->id();
     std::cout << ')';
+    if (size() == 2) {
+        std::cout << " if ";
+        (*this)[1].value()->Print();
+    }
 }
 
 void CallSSA::Print() {
@@ -73,11 +77,10 @@ void QuadSSA::Print() {
         "(num)", "(dec)", "(str)",
         "and", "xor", "or", "not", "shl", "shr",
         "add", "sub", "mul", "div", "mod", "pow",
-        "inc", "dec",
-        "lt", "le", "gt", "ge", "eq", "neq"
+        "lt", "le", "gt", "ge", "eq", "neq",
+        "ret"
     };
-    assert(op_ <= kNeq);   // 'return' and 'assign' cannot be an operator
-    std::cout << '[' << op_str[op_ + (op_ < 0 ? 3 : 2)] << ", ";
+    std::cout << '[' << op_str[static_cast<int>(op_)] << ", ";
     (*this)[0].value()->Print();
     if ((*this).size() == 2) {
         std::cout << ", ";

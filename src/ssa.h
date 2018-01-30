@@ -9,7 +9,7 @@
 
 #include "type.h"
 #include "def_use.h"
-#include "lexer.h"   // 'Operator' in QuadSSA
+// #include "lexer.h"   // 'Operator' in QuadSSA
 
 class ValueSSA : public Value {
 public:
@@ -20,13 +20,13 @@ public:
     ValueSSA(const std::string &value)
             : Value("#str"), str_val_(value), type_(ValueType::String) {}
 
-    SSAPtr Duplicate() {
-        switch (type_) {
-            case ValueType::Number: return std::make_shared<ValueSSA>(num_val_);
-            case ValueType::Decimal: return std::make_shared<ValueSSA>(dec_val_);
-            case ValueType::String: return std::make_shared<ValueSSA>(str_val_);
-        }
-    }
+    // SSAPtr Duplicate() {
+    //     switch (type_) {
+    //         case ValueType::Number: return std::make_shared<ValueSSA>(num_val_);
+    //         case ValueType::Decimal: return std::make_shared<ValueSSA>(dec_val_);
+    //         case ValueType::String: return std::make_shared<ValueSSA>(str_val_);
+    //     }
+    // }
 
     void Print() override;
 
@@ -93,7 +93,9 @@ public:
     void Print() override;
 
     void set_is_func(bool is_func) { is_func_ = is_func; }
+
     IDType id() const { return id_; }
+    bool is_func() const { return is_func_; }
     const std::list<SSAPtr> &preds() const { return preds_; }
 
 private:
@@ -104,9 +106,16 @@ private:
 
 class JumpSSA : public User {
 public:
-    JumpSSA(std::shared_ptr<BlockSSA> block) : User("jump->") {
-        reserve(1);
-        push_back(Use(block, this));
+    JumpSSA(std::shared_ptr<BlockSSA> block, SSAPtr cond) : User("jump->") {
+        if (cond) {            
+            reserve(2);
+            push_back(Use(block, this));
+            push_back(Use(cond, this));
+        }
+        else {
+            reserve(1);
+            push_back(Use(block, this));
+        }
     }
 
     void Print() override;
@@ -129,6 +138,14 @@ public:
 
 class QuadSSA : public User {
 public:
+    enum class Operator : char {
+        ConvNum, ConvDec, ConvStr,
+        And, Xor, Or, Not, Shl, Shr,
+        Add, Sub, Mul, Div, Mod, Pow,
+        Less, LessEqual, Greater, GreaterEqual, Euqal, NotEqual,
+        Return
+    };
+
     QuadSSA(Operator op, SSAPtr opr1, SSAPtr opr2) : User("inst"), op_(op) {
         if (opr2) {
             reserve(2);
@@ -144,7 +161,7 @@ public:
     void Print() override;
 
 private:
-    Operator op_;
+    Operator op_;   // TODO: rewrite Operator enum
 };
 
 class VariableSSA : public User {
