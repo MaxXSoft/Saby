@@ -14,11 +14,11 @@ namespace {
 
 }
 
-SSAPtr IRBuilder::NewBlock() {
+std::shared_ptr<BlockSSA> IRBuilder::NewBlock() {
     return std::make_shared<BlockSSA>(current_block_++);
 }
 
-SSAPtr IRBuilder::NewVariable(SSAPtr &value) {
+std::shared_ptr<VariableSSA> IRBuilder::NewVariable(SSAPtr &value) {
     auto var_id = current_var_++;
     WriteVariable(var_id, current_block_, value);
     return std::make_shared<VariableSSA>(var_id, value);
@@ -56,7 +56,7 @@ SSAPtr IRBuilder::ReadVariableRecursive(IDType var_id, IDType block_id) {
         // incomplete CFG
         auto phi = std::make_shared<PhiSSA>(block_id);
         value = phi;
-        SSACast<PhiSSA>(value)->set_ref(phi);
+        phi->set_ref(phi);
         incomplete_phis_[block_id][var_id] = value;
     }
     else if (blocks_[block_id]->preds().size() == 1) {
@@ -68,7 +68,7 @@ SSAPtr IRBuilder::ReadVariableRecursive(IDType var_id, IDType block_id) {
         // break potential cycles with operandless phi
         auto phi = std::make_shared<PhiSSA>(block_id);
         value = phi;
-        SSACast<PhiSSA>(value)->set_ref(phi);
+        phi->set_ref(phi);
         WriteVariable(var_id, block_id, value);
         value = AddPhiOperands(var_id, value);
     }
