@@ -73,9 +73,9 @@ public:
     void Print() override;
 
     void set_ref(const std::shared_ptr<PhiSSA> &phi) { ref_ = phi; }
+    SSAPtr ref() { return ref_.lock(); }
 
     IDType block_id() const { return block_id_; }
-    const SSAPtr &ref() const { return ref_.lock(); }
 
 private:
     IDType block_id_;

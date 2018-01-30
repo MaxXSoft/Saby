@@ -11,6 +11,7 @@
 
 class Value;
 class User;
+class Use;
 
 using SSAPtr = std::shared_ptr<Value>;
 using SSAPtrList = std::vector<SSAPtr>;
@@ -24,27 +25,6 @@ template <typename T>
 inline T *SSACast(Value *ptr) {
     return dynamic_cast<T *>(ptr);
 }
-
-class Use {
-public:
-    Use(SSAPtr value, User *user) : value_(value), user_(user) {
-        if (value_) value_->AddUse(this);
-    }
-    ~Use() { if (value_) value_->RemoveUse(this); }
-
-    void set_value(SSAPtr &value) {
-        if (value_) value_->RemoveUse(this);
-        value_ = value;
-        if (value_) value_->AddUse(this);
-    }
-
-    SSAPtr value() const { return value_; }
-    User *user() const { return user_; }
-
-private:
-    SSAPtr value_;   // User --Use-> Value
-    User *user_;
-};
 
 class Value {
 public:
@@ -105,6 +85,27 @@ public:
 
 private:
     std::vector<Use> operands_;
+};
+
+class Use {
+public:
+    Use(SSAPtr value, User *user) : value_(value), user_(user) {
+        if (value_) value_->AddUse(this);
+    }
+    ~Use() { if (value_) value_->RemoveUse(this); }
+
+    void set_value(SSAPtr &value) {
+        if (value_) value_->RemoveUse(this);
+        value_ = value;
+        if (value_) value_->AddUse(this);
+    }
+
+    SSAPtr value() const { return value_; }
+    User *user() const { return user_; }
+
+private:
+    SSAPtr value_;   // User --Use-> Value
+    User *user_;
 };
 
 #endif // SABY_DEF_USE_H_
