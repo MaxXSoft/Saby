@@ -11,12 +11,27 @@
 
 class ExpressionAST {
 public:
+    enum class ASTType : char {
+        Id, Var, Num, Dec, Str,
+        Binary, Unary, Call, Block, Func, Asm,
+        If, While, CtrlFlow, Extern
+    };
+
     virtual ~ExpressionAST() = default;
 
     virtual TypeValue SemaAnalyze(Analyzer &ana) = 0;
-    virtual SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) = 0;
+    virtual SSAPtr GenIR(IRBuilder &irb) = 0;
 
-    EnvPtr env;
+    ASTType type() const { return type_; }
+    EnvPtr env() const { return env_; }
+
+protected:
+    ExpressionAST(ASTType type) : type_(type) {}
+    void set_env(EnvPtr env) { env_ = env; }
+
+private:
+    ASTType type_;
+    EnvPtr env_;
 };
 
 using ASTPtr = std::unique_ptr<ExpressionAST>;
@@ -26,10 +41,11 @@ using VarDefList = std::vector<VarDef>;
 
 class IdentifierAST : public ExpressionAST {
 public:
-    IdentifierAST(const std::string &id, int type) : id_(id), type_(type) {}
-    
+    IdentifierAST(const std::string &id, int type)
+            : ExpressionAST(ASTType::Id), id_(id), type_(type) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     std::string id_;
@@ -39,10 +55,11 @@ private:
 class VariableAST : public ExpressionAST {
 public:
     VariableAST(VarDefList defs, int type)
-            : defs_(std::move(defs)), type_(type) {}
-    
+            : ExpressionAST(ASTType::Var),
+              defs_(std::move(defs)), type_(type) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     VarDefList defs_;
@@ -51,10 +68,11 @@ private:
 
 class NumberAST : public ExpressionAST {
 public:
-    NumberAST(long long value) : value_(value) {}
-    
+    NumberAST(long long value)
+            : ExpressionAST(ASTType::Num), value_(value) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     long long value_;
@@ -62,10 +80,11 @@ private:
 
 class DecimalAST : public ExpressionAST {
 public:
-    DecimalAST(double value) : value_(value) {}
-    
+    DecimalAST(double value)
+            : ExpressionAST(ASTType::Dec), value_(value) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     double value_;
@@ -73,10 +92,11 @@ private:
 
 class StringAST : public ExpressionAST {
 public:
-    StringAST(const std::string &str) : str_(str) {}
-    
+    StringAST(const std::string &str)
+            : ExpressionAST(ASTType::Str), str_(str) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     std::string str_;
@@ -86,10 +106,11 @@ private:
 class BinaryExpressionAST : public ExpressionAST {
 public:
     BinaryExpressionAST(int operator_id, ASTPtr lhs, ASTPtr rhs)
-            : operator_id_(operator_id), lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
-    
+            : ExpressionAST(ASTType::Binary), operator_id_(operator_id),
+              lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     int operator_id_;
@@ -99,10 +120,11 @@ private:
 class UnaryExpressionAST : public ExpressionAST {
 public:
     UnaryExpressionAST(int operator_id, ASTPtr operand)
-            : operator_id_(operator_id), operand_(std::move(operand)) {}
-    
+            : ExpressionAST(ASTType::Unary),
+              operator_id_(operator_id), operand_(std::move(operand)) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     int operator_id_;
@@ -112,10 +134,11 @@ private:
 class CallAST : public ExpressionAST {
 public:
     CallAST(ASTPtr callee, ASTPtrList args)
-            : callee_(std::move(callee)), args_(std::move(args)) {}
-    
+            : ExpressionAST(ASTType::Call),
+              callee_(std::move(callee)), args_(std::move(args)) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     ASTPtr callee_;
@@ -125,10 +148,10 @@ private:
 class BlockAST : public ExpressionAST {
 public:
     BlockAST(ASTPtrList expr_list)
-            : expr_list_(std::move(expr_list)) {}
-    
+            : ExpressionAST(ASTType::Block), expr_list_(std::move(expr_list)) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     ASTPtrList expr_list_;
@@ -137,11 +160,11 @@ private:
 class FunctionAST : public ExpressionAST {
 public:
     FunctionAST(ASTPtrList args, int return_type, ASTPtr body)
-            : args_(std::move(args)), return_type_(return_type),
-              body_(std::move(body)) {}
-    
+            : ExpressionAST(ASTType::Func), args_(std::move(args)),
+              return_type_(return_type), body_(std::move(body)) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     ASTPtrList args_;
@@ -151,10 +174,11 @@ private:
 
 class AsmAST : public ExpressionAST {
 public:
-    AsmAST(const std::string &asm_str) : asm_str_(asm_str) {}
-    
+    AsmAST(const std::string &asm_str)
+            : ExpressionAST(ASTType::Asm), asm_str_(asm_str) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     std::string asm_str_;
@@ -163,11 +187,11 @@ private:
 class IfAST : public ExpressionAST {
 public:
     IfAST(ASTPtr cond, ASTPtr then, ASTPtr else_then)
-            : cond_(std::move(cond)), then_(std::move(then)),
-              else_then_(std::move(else_then)) {}
-    
+            : ExpressionAST(ASTType::If), cond_(std::move(cond)),
+              then_(std::move(then)), else_then_(std::move(else_then)) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     ASTPtr cond_, then_, else_then_;
@@ -176,10 +200,11 @@ private:
 class WhileAST : public ExpressionAST {
 public:
     WhileAST(ASTPtr cond, ASTPtr body)
-            : cond_(std::move(cond)), body_(std::move(body)) {}
-    
+            : ExpressionAST(ASTType::While),
+              cond_(std::move(cond)), body_(std::move(body)) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     ASTPtr cond_, body_;
@@ -189,10 +214,11 @@ private:
 class ControlFlowAST : public ExpressionAST {
 public:
     ControlFlowAST(int type, ASTPtr value)
-            : type_(type), value_(std::move(value)) {}
-    
+            : ExpressionAST(ASTType::CtrlFlow),
+              type_(type), value_(std::move(value)) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     int type_;
@@ -203,10 +229,11 @@ private:
 class ExternalAST : public ExpressionAST {
 public:
     ExternalAST(int type, LibList libs)
-            : type_(type), libs_(std::move(libs)) {}
-    
+            : ExpressionAST(ASTType::Extern),
+              type_(type), libs_(std::move(libs)) {}
+
     TypeValue SemaAnalyze(Analyzer &ana) override;
-    SSAPtr GenIR(IRBuilder &irb, EnvPtr &env) override;
+    SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
     int type_;
