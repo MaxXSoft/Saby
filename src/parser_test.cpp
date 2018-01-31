@@ -33,5 +33,5 @@ int main(int argc, const char *argv[]) {
         std::cout << err_num << " errors generated." << std::endl;
     }
     
-    return 0;
+    return err_num;
 }
