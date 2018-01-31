@@ -347,6 +347,16 @@ ASTPtr Parser::ParsePrimary() {
                 }
             }
         }
+        case kOperator: {
+            switch (lexer_.op_val()) {
+                case kInc: case kDec: {
+                    return ParseUnaryExpression();
+                }
+                default: {
+                    return PrintError("invalid usage of unary operator");
+                }
+            }
+        }
         case kId: {
             return ParseId();
         }
