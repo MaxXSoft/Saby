@@ -76,7 +76,8 @@ public:
 
     void AddOperand(SSAPtr opr) { push_back(Use(opr, this)); }
     void ReplaceBy(SSAPtr &ssa) {
-        auto value = dynamic_cast<Value *>(this);
+        // TODO: check conversion is valid
+        auto value = static_cast<Value *>(this);
         for (auto &&use : *value) {
             use->set_value(ssa);   // TODO: test
         }
