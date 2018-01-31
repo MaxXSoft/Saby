@@ -28,7 +28,7 @@ public:
     //     }
     // }
 
-    void Print() override;
+    void Print(int indent) override;
 
 private:
     enum class ValueType : char {
@@ -45,17 +45,29 @@ class ArgHolderSSA : public Value {
 public:
     ArgHolderSSA(IDType arg_id) : Value("#arg"), arg_id_(arg_id) {}
 
-    void Print() override;
+    void Print(int indent) override;
 
 private:
     IDType arg_id_;
+};
+
+// store inline assembly block
+// nothing can use it although it's a value
+class AsmSSA : public Value {
+public:
+    AsmSSA(const std::string &text) : Value("asm:"), text_(text) {}
+
+    void Print(int indent) override;
+
+private:
+    std::string text_;
 };
 
 class UndefSSA : public Value {
 public:
     UndefSSA() : Value("#und") {}
 
-    void Print() override;
+    void Print(int indent) override;
 };
 
 class PhiSSA : public User {
@@ -70,7 +82,7 @@ public:
         }
     }
 
-    void Print() override;
+    void Print(int indent) override;
 
     void set_ref(const std::shared_ptr<PhiSSA> &phi) { ref_ = phi; }
     SSAPtr ref() { return ref_.lock(); }
@@ -90,7 +102,7 @@ public:
     void AddPred(SSAPtr pred) { preds_.push_back(pred); }
     void AddValue(SSAPtr value) { push_back(Use(value, this)); }
 
-    void Print() override;
+    void Print(int indent) override;
 
     void set_is_func(bool is_func) { is_func_ = is_func; }
 
@@ -118,7 +130,7 @@ public:
         }
     }
 
-    void Print() override;
+    void Print(int indent) override;
 };
 
 class CallSSA : public User {
@@ -133,7 +145,7 @@ public:
         if (size() <= kFuncMaxArgNum + 1) push_back(Use(value, this));
     }
 
-    void Print() override;
+    void Print(int indent) override;
 };
 
 class QuadSSA : public User {
@@ -158,7 +170,7 @@ public:
         }
     }
 
-    void Print() override;
+    void Print(int indent) override;
 
 private:
     Operator op_;   // TODO: rewrite Operator enum
@@ -176,7 +188,7 @@ public:
         }
     }
 
-    void Print() override;
+    void Print(int indent) override;
 
     IDType id() const { return id_; }
 

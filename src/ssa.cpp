@@ -1,9 +1,24 @@
 #include "ssa.h"
 
 #include <iostream>
+#include <utility>
+#include <cstdio>
 #include <cassert>
 
-void ValueSSA::Print() {
+namespace {
+
+std::string GetIndent(int indent_num) {
+    std::string indent;
+    indent.reserve(indent_num);
+    while (indent_num--) {
+        indent.push_back('\t');
+    }
+    return std::move(indent);
+}
+
+}
+
+void ValueSSA::Print(int indent) {
     std::cout << name() << '(';
     switch (type_) {
         case ValueType::Number: {
@@ -22,57 +37,73 @@ void ValueSSA::Print() {
     std::cout << ')';
 }
 
-void ArgHolderSSA::Print() {
+void ArgHolderSSA::Print(int indent) {
     std::cout << name() << '(' << arg_id_ << ')';
 }
 
-void UndefSSA::Print() {
+void AsmSSA::Print(int indent) {
+    std::string ind = GetIndent(indent + 1);
+    std::cout << name() << std::endl << ind;
+    for (const auto &i : text_) {
+        if (i == '\n') {
+            puts(ind.c_str());
+        }
+        else {
+            putchar(i);
+        }
+    }
+    fflush(stdout);
+}
+
+void UndefSSA::Print(int indent) {
     std::cout << name();
 }
 
-void PhiSSA::Print() {
+void PhiSSA::Print(int indent) {
     std::cout << name() << '(';
     for (const auto &it : *this) {
-        it.value()->Print();
+        it.value()->Print(indent);
         std::cout << ", ";
     }
     std::cout << "\b\b)";
 }
 
-void BlockSSA::Print() {
+void BlockSSA::Print(int indent) {
+    ++indent;
     std::cout << name() << ' ' << id_ << std::endl;
+    std::string ind = GetIndent(indent);
     for (const auto &it : *this) {
-        std::cout << '\t';
-        it.value()->Print();
+        std::cout << ind;
+        it.value()->Print(indent);
         std::cout << std::endl;
     }
     std::cout << '\b';
 }
 
-void JumpSSA::Print() {
+void JumpSSA::Print(int indent) {
     std::cout << name() << "(block: ";
     std::cout << SSACast<BlockSSA>((*this)[0].value())->id();
     std::cout << ')';
     if (size() == 2) {
         std::cout << " if ";
-        (*this)[1].value()->Print();
+        (*this)[1].value()->Print(indent);
     }
 }
 
-void CallSSA::Print() {
+void CallSSA::Print(int indent) {
     std::cout << name() << "{(block: ";
     std::cout << SSACast<BlockSSA>((*this)[0].value())->id();
     std::cout << "), (";
     if (size() > 1) {
         for (int i = 1; i < size(); ++i) {
-            (*this)[i].value()->Print();
+            (*this)[i].value()->Print(indent);
             std::cout << ", ";
         }
     }
     std::cout << "\b\b)}";
 }
 
-void QuadSSA::Print() {
+void QuadSSA::Print(int indent) {
     const char *op_str[] = {
         "(num)", "(dec)", "(str)",
         "and", "xor", "or", "not", "shl", "shr",
@@ -81,18 +112,18 @@ void QuadSSA::Print() {
         "ret"
     };
     std::cout << '[' << op_str[static_cast<int>(op_)] << ", ";
-    (*this)[0].value()->Print();
+    (*this)[0].value()->Print(indent);
     if ((*this).size() == 2) {
         std::cout << ", ";
-        (*this)[1].value()->Print();
+        (*this)[1].value()->Print(indent);
     }
     std::cout << ']';
 }
 
-void VariableSSA::Print() {
+void VariableSSA::Print(int indent) {
     std::cout << name() << '_' << id_;
     if ((*this).size()) {
         std::cout << " = ";
-        (*this)[0].value()->Print();
+        (*this)[0].value()->Print(indent);
     }
 }
