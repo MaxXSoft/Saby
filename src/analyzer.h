@@ -9,15 +9,15 @@
 class Analyzer {
 public:
     Analyzer(Lexer &lexer)
-            : lexer_(lexer), env_(MakeEnvironment(nullptr)) {}
+            : lexer_(lexer), env_(MakeEnvironment(nullptr)), error_num_(0) {}
     Analyzer(Lexer &lexer, const EnvPtr &env)
-            : lexer_(lexer), env_(env) {}
+            : lexer_(lexer), env_(env), error_num_(0) {}
     ~Analyzer() {}
 
     TypeValue AnalyzeId(const std::string &id, TypeValue type);
     TypeValue AnalyzeVar(const VarTypeList &defs, TypeValue type);
-    TypeValue AnalyzeBinExpr(int op, TypeValue l_type, TypeValue r_type);
-    TypeValue AnalyzeUnaExpr(int op, TypeValue type);
+    TypeValue AnalyzeBinExpr(int op, TypeValue l_type, TypeValue r_type, bool is_lvalue);
+    TypeValue AnalyzeUnaExpr(int op, TypeValue type, bool is_lvalue);
     TypeValue AnalyzeCall(TypeValue callee, const TypeList &args);
     TypeValue AnalyzeFunc(const TypeList &args, TypeValue ret_type);
     TypeValue AnalyzeCtrlFlow(int ctrlflow_type, TypeValue value);

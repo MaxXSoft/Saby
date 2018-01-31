@@ -28,7 +28,7 @@ inline TypeValue GetFuncRetType(TypeValue func_type) {
 bool IsBinaryOperator(int operator_id) {
     switch (operator_id) {
         case kConvNum: case kConvDec: case kConvStr:
-        case kInc: case kDec: {
+        case kNot: case kInc: case kDec: {
             return false;
         }
         default: {
@@ -144,21 +144,29 @@ TypeValue Analyzer::AnalyzeVar(const VarTypeList &defs, TypeValue type) {
     return kVoid;   // variable definition will not return value
 }
 
-TypeValue Analyzer::AnalyzeBinExpr(int op, TypeValue l_type, TypeValue r_type) {
+TypeValue Analyzer::AnalyzeBinExpr(int op, TypeValue l_type, TypeValue r_type, bool is_lvalue) {
     if (!IsBinaryOperator(op)) return PrintError("invalid binary operator");
     if (l_type != r_type) return PrintError("type mismatch between lhs and rhs");
     if (!CheckType(op, l_type)) {
         return PrintError("invalid operand type in binary expression");
     }
+    // 'op' is assignment operator
+    if (op >= kAssign && !is_lvalue) {
+        return PrintError("assignment operator must be applied to lvalue");
+    }
     return l_type;
 }
 
-TypeValue Analyzer::AnalyzeUnaExpr(int op, TypeValue type) {
+TypeValue Analyzer::AnalyzeUnaExpr(int op, TypeValue type, bool is_lvalue) {
     if (op != kSub && IsBinaryOperator(op)) {
         return PrintError("invalid unary operator");
     }
     if (!CheckType(op, type)) {
         return PrintError("invalid operand type in unary expression");
+    }
+    // 'op' is inc/dec operator
+    if ((op == kInc || op == kDec) && !is_lvalue) {
+        return PrintError("inc/dec operator must be applied to lvalue");
     }
     switch (op) {
         case kConvNum: return kNumber;

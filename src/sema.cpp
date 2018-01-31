@@ -6,7 +6,7 @@
 
 TypeValue IdentifierAST::SemaAnalyze(Analyzer &ana) {
     auto ret = ana.AnalyzeId(id_, type_);
-    env = ana.env();
+    set_env(ana.env());
     return ret;
 }
 
@@ -17,7 +17,7 @@ TypeValue VariableAST::SemaAnalyze(Analyzer &ana) {
         var_type.push_back({i.first, i.second->SemaAnalyze(ana)});
     }
     auto ret = ana.AnalyzeVar(var_type, type_);
-    env = ana.env();
+    set_env(ana.env());
     return ret;
 }
 
@@ -34,15 +34,16 @@ TypeValue StringAST::SemaAnalyze(Analyzer &ana) {
 }
 
 TypeValue BinaryExpressionAST::SemaAnalyze(Analyzer &ana) {
-    // TODO: did not consider situation like 'a + 1 = a + 1'
-    auto ret = ana.AnalyzeBinExpr(operator_id_, lhs_->SemaAnalyze(ana), rhs_->SemaAnalyze(ana));
-    env = ana.env();
+    auto is_lvalue = lhs_->type() == ASTType::Id;
+    auto ret = ana.AnalyzeBinExpr(operator_id_, lhs_->SemaAnalyze(ana), rhs_->SemaAnalyze(ana), is_lvalue);
+    set_env(ana.env());
     return ret;
 }
 
 TypeValue UnaryExpressionAST::SemaAnalyze(Analyzer &ana) {
-    auto ret = ana.AnalyzeUnaExpr(operator_id_, operand_->SemaAnalyze(ana));
-    env = ana.env();
+    auto is_lvalue = operand_->type() == ASTType::Id;
+    auto ret = ana.AnalyzeUnaExpr(operator_id_, operand_->SemaAnalyze(ana), is_lvalue);
+    set_env(ana.env());
     return ret;
 }
 
@@ -52,7 +53,7 @@ TypeValue CallAST::SemaAnalyze(Analyzer &ana) {
         args_type.push_back(i->SemaAnalyze(ana));
     }
     auto ret = ana.AnalyzeCall(callee_->SemaAnalyze(ana), args_type);
-    env = ana.env();
+    set_env(ana.env());
     return ret;
 }
 
@@ -64,7 +65,7 @@ TypeValue BlockAST::SemaAnalyze(Analyzer &ana) {
     }
 
     ana.RestoreEnvironment();
-    env = ana.nested_env();
+    set_env(ana.nested_env());
     return kVoid;
 }
 
@@ -80,12 +81,12 @@ TypeValue FunctionAST::SemaAnalyze(Analyzer &ana) {
     if (body_->SemaAnalyze(ana) == kTypeError) return kTypeError;
 
     ana.RestoreEnvironment();
-    env = ana.nested_env();
+    set_env(ana.nested_env());
     return ret;
 }
 
 TypeValue AsmAST::SemaAnalyze(Analyzer &ana) {
-    env = ana.env();   // it's necessary
+    set_env(ana.env());   // it's necessary
     return kVoid;
 }
 
@@ -93,27 +94,27 @@ TypeValue IfAST::SemaAnalyze(Analyzer &ana) {
     if (cond_->SemaAnalyze(ana) == kTypeError) return kTypeError;
     if (then_->SemaAnalyze(ana) == kTypeError) return kTypeError;
     if (else_then_->SemaAnalyze(ana) == kTypeError) return kTypeError;
-    env = ana.env();
+    set_env(ana.env());
     return kVoid;
 }
 
 TypeValue WhileAST::SemaAnalyze(Analyzer &ana) {
     if (cond_->SemaAnalyze(ana) == kTypeError) return kTypeError;
     if (body_->SemaAnalyze(ana) == kTypeError) return kTypeError;
-    env = ana.env();
+    set_env(ana.env());
     return kVoid;
 }
 
 TypeValue ControlFlowAST::SemaAnalyze(Analyzer &ana) {
     auto value = value_ ? value_->SemaAnalyze(ana) : kTypeError;
     auto ret = ana.AnalyzeCtrlFlow(type_, value);
-    env = ana.env();
+    set_env(ana.env());
     return ret;
 }
 
 TypeValue ExternalAST::SemaAnalyze(Analyzer &ana) {
     auto ret = ana.AnalyzeExtern(type_, libs_);
-    env = ana.env();
+    set_env(ana.env());
     return ret;
 }
 
