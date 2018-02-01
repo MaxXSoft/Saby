@@ -123,7 +123,7 @@ TypeValue Analyzer::AnalyzeVar(const VarTypeList &defs, TypeValue type) {
         if (init_type == kTypeError) return kTypeError;
         // type deduce
         if (type == kVar && !deduced) {
-            if (init_type == kVar) {
+            if (init_type == kVar || init_type == kVoid) {
                 return PrintError("cannot deduce the type of a expression with a uncertain type");
             }
             type = init_type;
