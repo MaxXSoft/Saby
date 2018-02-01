@@ -47,6 +47,8 @@ public:
     TypeValue SemaAnalyze(Analyzer &ana) override;
     SSAPtr GenIR(IRBuilder &irb) override;
 
+    const std::string &id() const { return id_; }
+
 private:
     std::string id_;
     int type_;
