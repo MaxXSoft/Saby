@@ -41,9 +41,9 @@ private:
 };
 
 // used to represent arguments in the body of a function
-class ArgHolderSSA : public Value {
+class ArgGetterSSA : public Value {
 public:
-    ArgHolderSSA(IDType arg_id) : Value("#arg"), arg_id_(arg_id) {}
+    ArgGetterSSA(IDType arg_id) : Value("#arg"), arg_id_(arg_id) {}
 
     void Print(int indent) override;
 
@@ -134,19 +134,18 @@ public:
     void Print(int indent) override;
 };
 
-class CallSSA : public User {
+class ArgSetterSSA : public User {
 public:
-    CallSSA(std::shared_ptr<BlockSSA> block)
-            : User("call") {
-        reserve(kFuncMaxArgNum + 1);
-        push_back(Use(block, this));
-    }
-
-    void AddArgument(SSAPtr value) {
-        if (size() <= kFuncMaxArgNum + 1) push_back(Use(value, this));
+    ArgSetterSSA(int arg_pos, SSAPtr value)
+            : User("$arg"), arg_pos_(arg_pos) {
+        reserve(1);
+        push_back(Use(value, this));
     }
 
     void Print(int indent) override;
+
+private:
+    int arg_pos_;
 };
 
 class QuadSSA : public User {
@@ -156,7 +155,7 @@ public:
         And, Xor, Or, Not, Shl, Shr,
         Add, Sub, Mul, Div, Mod, Pow,
         Less, LessEqual, Greater, GreaterEqual, Euqal, NotEqual,
-        Return
+        Break, Continue, Return, Import, Export
     };
 
     QuadSSA(Operator op, SSAPtr opr1, SSAPtr opr2) : User("inst"), op_(op) {

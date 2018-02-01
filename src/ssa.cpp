@@ -37,7 +37,7 @@ void ValueSSA::Print(int indent) {
     std::cout << ')';
 }
 
-void ArgHolderSSA::Print(int indent) {
+void ArgGetterSSA::Print(int indent) {
     std::cout << name() << '(' << arg_id_ << ')';
 }
 
@@ -90,17 +90,9 @@ void JumpSSA::Print(int indent) {
     }
 }
 
-void CallSSA::Print(int indent) {
-    std::cout << name() << "{(block: ";
-    std::cout << SSACast<BlockSSA>((*this)[0].value())->id();
-    std::cout << "), (";
-    if (size() > 1) {
-        for (int i = 1; i < size(); ++i) {
-            (*this)[i].value()->Print(indent);
-            std::cout << ", ";
-        }
-    }
-    std::cout << "\b\b)}";
+void ArgSetterSSA::Print(int indent) {
+    std::cout << name() << '_' << arg_pos_ << " = ";
+    (*this)[0].value()->Print(indent);
 }
 
 void QuadSSA::Print(int indent) {
