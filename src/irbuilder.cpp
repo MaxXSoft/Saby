@@ -18,13 +18,13 @@ std::shared_ptr<BlockSSA> IRBuilder::NewBlock() {
     return std::make_shared<BlockSSA>(current_block_++);
 }
 
-std::shared_ptr<VariableSSA> IRBuilder::NewVariable(SSAPtr &value) {
+std::shared_ptr<VariableSSA> IRBuilder::NewVariable(SSAPtr value) {
     auto var_id = current_var_++;
     WriteVariable(var_id, current_block_, value);
     return std::make_shared<VariableSSA>(var_id, value);
 }
 
-void IRBuilder::WriteVariable(IDType var_id, IDType block_id, SSAPtr &value) {
+void IRBuilder::WriteVariable(IDType var_id, IDType block_id, SSAPtr value) {
     if (block_id < current_def_.size()) {
         auto &current_var_list = current_def_[block_id];
         if (var_id < current_var_list.size()) {
@@ -119,7 +119,7 @@ SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
     return same;
 }
 
-void IRBuilder::SealBlock(SSAPtr &block) {
+void IRBuilder::SealBlock(SSAPtr block) {
     auto block_id = SSACast<BlockSSA>(block)->id();
     auto it = std::find(sealed_blocks_.begin(), sealed_blocks_.end(), block_id);
     if (it == sealed_blocks_.end()) {

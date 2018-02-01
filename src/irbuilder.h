@@ -11,11 +11,11 @@ public:
     ~IRBuilder() { Release(); }
 
     std::shared_ptr<BlockSSA> NewBlock();
-    std::shared_ptr<VariableSSA> NewVariable(SSAPtr &value);
+    std::shared_ptr<VariableSSA> NewVariable(SSAPtr value);
 
-    void WriteVariable(IDType var_id, IDType block_id, SSAPtr &value);
+    void WriteVariable(IDType var_id, IDType block_id, SSAPtr value);
     SSAPtr ReadVariable(IDType var_id, IDType block_id);
-    void SealBlock(SSAPtr &block);
+    void SealBlock(SSAPtr block);
 
     void Release();
 
