@@ -1,6 +1,8 @@
 #include "symbol.h"
 
 #include <fstream>
+#include <functional>   // std::hash
+#include <cstdio>
 
 namespace {
 
@@ -58,19 +60,28 @@ bool Environment::SaveEnv(const char *path, const std::vector<std::string> &syms
     return true;
 }
 
-bool Environment::LoadEnv(const char *path) {
+Environment::LoadEnvReturn Environment::LoadEnv(const char *path) {
+    using LEReturn = Environment::LoadEnvReturn;
+
+    auto str_hash = std::hash<std::string>()(path);
+    if (!loaded_lib_.insert(str_hash).second) {
+        // lib have already been added
+        return LEReturn::LibConflicted;
+    }
+
     std::ifstream in(path, std::ifstream::binary);
-    if (!in.is_open()) return false;
+    if (!in.is_open()) return LEReturn::FileError;
     in >> std::noskipws;
 
     unsigned int head;
     in.read((char *)&head, sizeof(head));
-    if (head != header) return false;
+    if (head != header) return LEReturn::FileError;
 
     std::string id;
     char temp;
     TypeValue type;
 
+    LEReturn last_status = LEReturn::Success;
     for (;;) {
         in >> temp;
         if (in.eof()) break;
@@ -79,12 +90,15 @@ bool Environment::LoadEnv(const char *path) {
         }
         else {
             in.read((char *)&type, sizeof(TypeValue));
-            table_.insert(SymbolHash::value_type(id, type));
+            if (!table_.insert(SymbolHash::value_type(id, type)).second) {
+                // there are two functions that have the same name
+                last_status = LEReturn::FuncConflicted;
+            }
             id.clear();
         }
     }
 
     in.close();
-    return true;
+    return last_status;
 }
 
