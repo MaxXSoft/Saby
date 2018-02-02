@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "type.h"
+#include "fs/dir.h"
 
 namespace {
 
@@ -93,6 +94,13 @@ TypeValue Analyzer::PrintError(const char *description, const char *id) {
     }
     ++error_num_;
     return kTypeError;
+}
+
+void Analyzer::PrintWarning(const char *description, const char *id) {
+    fprintf(stderr, "\033[1manalyzer\033[0m(before line %u): "
+                    "\033[35m\033[1mwarning:\033[0m id '%s' %s\n", 
+            lexer_.line_pos(), id, description);
+    ++warning_num_;
 }
 
 TypeValue Analyzer::AnalyzeId(const std::string &id, TypeValue type) {
@@ -216,12 +224,16 @@ TypeValue Analyzer::AnalyzeCtrlFlow(int ctrlflow_type, TypeValue value) {
     if (ctrlflow_type == kReturn) {
         auto ret = env_->GetType("@");
         if (ret != kTypeError) {
-            if (value != kTypeError) {   // kTypeError means return void
-                auto ret_type = GetFuncRetType(ret);
-                if (value >= kFuncTypeBase) value = kFunction;
-                if (ret_type != value) {
-                    return PrintError("type mismatch when return from function");
-                }
+            auto ret_type = GetFuncRetType(ret);
+            // kTypeError means returning 'void'
+            if (value == kTypeError) {
+                value = kVoid;
+            }
+            else if (value >= kFuncTypeBase) {
+                value = kFunction;
+            }
+            if (ret_type != value) {
+                return PrintError("type mismatch when return from function");
             }
         }
         else {
@@ -238,8 +250,27 @@ TypeValue Analyzer::AnalyzeExtern(int ext_type, const LibList &libs) {
     if (ext_type == kImport) {
         // load symbol table
         for (const auto &i : libs) {
-            if (!env_->LoadEnv((lib_path_ + i + ".saby.sym").c_str())) {
-                return PrintError("cannot be imported", i.c_str());
+            auto cur_lib = GetRealPath(lib_path_ + i + ".saby.sym");
+            if (cur_lib == sym_path_) {
+                PrintWarning("was skipped, self-importing "
+                             "is not allowed", i.c_str());
+                continue;
+            }
+            using LEReturn = Environment::LoadEnvReturn;
+            switch (env_->LoadEnv(cur_lib.c_str())) {
+                case LEReturn::FileError: {
+                    return PrintError("cannot be imported", i.c_str());
+                }
+                case LEReturn::LibConflicted: {
+                    PrintWarning("has already been imported", i.c_str());
+                    break;
+                }
+                case LEReturn::FuncConflicted: {
+                    PrintWarning("has some functions conflicts "
+                                 "with existing id", i.c_str());
+                    break;
+                }
+                default:;
             }
         }
     }
