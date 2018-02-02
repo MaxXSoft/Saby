@@ -9,9 +9,10 @@
 class Analyzer {
 public:
     Analyzer(Lexer &lexer)
-            : lexer_(lexer), env_(MakeEnvironment(nullptr)), error_num_(0) {}
+            : lexer_(lexer), env_(MakeEnvironment(nullptr)),
+              error_num_(0), warning_num_(0) {}
     Analyzer(Lexer &lexer, const EnvPtr &env)
-            : lexer_(lexer), env_(env), error_num_(0) {}
+            : lexer_(lexer), env_(env), error_num_(0), warning_num_(0) {}
     ~Analyzer() {}
 
     TypeValue AnalyzeId(const std::string &id, TypeValue type);
@@ -30,16 +31,23 @@ public:
     void RestoreEnvironment() { env_ = env_->outer(); }
 
     unsigned int error_num() const { return error_num_; }
+    unsigned int warning_num() const { return warning_num_; }
     const EnvPtr &env() const { return env_; }
     const EnvPtr &nested_env() const { return nested_env_; }
 
-    void set_lib_path(const std::string lib_path) { lib_path_ = lib_path; }
-    void set_sym_path(const std::string sym_path) { sym_path_ = sym_path; }
+    // NOTICE: absolute path requited!
+    void set_lib_path(const std::string &lib_path) {
+        lib_path_ = lib_path;
+        if (lib_path_.back() != '/') lib_path_.push_back('/');
+    }
+    void set_sym_path(const std::string &sym_path) { sym_path_ = sym_path; }
 
 private:
     TypeValue PrintError(const char *description, const char *id = nullptr);
+    void PrintWarning(const char *description, const char *id);
+
     Lexer &lexer_;
-    unsigned int error_num_;
+    unsigned int error_num_, warning_num_;
     EnvPtr env_, nested_env_;
     // lib_path: run_path/lib/; sym_path: file_path/file_name.saby.sym
     std::string lib_path_, sym_path_;
