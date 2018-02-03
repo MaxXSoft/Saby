@@ -9,7 +9,6 @@
 
 #include "type.h"
 #include "def_use.h"
-// #include "lexer.h"   // 'Operator' in QuadSSA
 
 class ValueSSA : public Value {
 public:
@@ -19,14 +18,6 @@ public:
             : Value("#dec"), dec_val_(value), type_(ValueType::Decimal) {}
     ValueSSA(const std::string &value)
             : Value("#str"), str_val_(value), type_(ValueType::String) {}
-
-    // SSAPtr Duplicate() {
-    //     switch (type_) {
-    //         case ValueType::Number: return std::make_shared<ValueSSA>(num_val_);
-    //         case ValueType::Decimal: return std::make_shared<ValueSSA>(dec_val_);
-    //         case ValueType::String: return std::make_shared<ValueSSA>(str_val_);
-    //     }
-    // }
 
     void Print(int indent) override;
 
@@ -52,7 +43,7 @@ private:
 };
 
 // store inline assembly block
-// nothing can use it although it's a value
+// NOTICE: nothing can use it although it's a 'Value'
 class AsmSSA : public Value {
 public:
     AsmSSA(const std::string &text) : Value("asm:"), text_(text) {}
@@ -155,7 +146,7 @@ public:
         And, Xor, Or, Not, Shl, Shr,
         Add, Sub, Mul, Div, Mod, Pow,
         Less, LessEqual, Greater, GreaterEqual, Euqal, NotEqual,
-        Break, Continue, Return, Import, Export
+        /* Break, Continue, */ Call, Return, Import, Export
     };
 
     QuadSSA(Operator op, SSAPtr opr1, SSAPtr opr2) : User("inst"), op_(op) {
