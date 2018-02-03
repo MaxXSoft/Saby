@@ -51,7 +51,7 @@ public:
         }
     }
 
-    virtual void Print(int indent = 0) = 0;
+    virtual void Print() = 0;
 
     ListIter begin() { return uses_.begin(); }
     ListIter end() { return uses_.end(); }
