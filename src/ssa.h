@@ -19,7 +19,7 @@ public:
     ValueSSA(const std::string &value)
             : Value("#str"), str_val_(value), type_(ValueType::String) {}
 
-    void Print(int indent) override;
+    void Print() override;
 
 private:
     enum class ValueType : char {
@@ -36,7 +36,7 @@ class ArgGetterSSA : public Value {
 public:
     ArgGetterSSA(IDType arg_id) : Value("#arg"), arg_id_(arg_id) {}
 
-    void Print(int indent) override;
+    void Print() override;
 
 private:
     IDType arg_id_;
@@ -48,7 +48,7 @@ class AsmSSA : public Value {
 public:
     AsmSSA(const std::string &text) : Value("asm:"), text_(text) {}
 
-    void Print(int indent) override;
+    void Print() override;
 
 private:
     std::string text_;
@@ -58,7 +58,7 @@ class UndefSSA : public Value {
 public:
     UndefSSA() : Value("#und") {}
 
-    void Print(int indent) override;
+    void Print() override;
 };
 
 class PhiSSA : public User {
@@ -74,7 +74,7 @@ public:
         }
     }
 
-    void Print(int indent) override;
+    void Print() override;
 
     void set_ref(const std::shared_ptr<PhiSSA> &phi) { ref_ = phi; }
     SSAPtr ref() { return ref_.lock(); }
@@ -94,7 +94,7 @@ public:
     void AddPred(SSAPtr pred) { preds_.push_back(pred); }
     void AddValue(SSAPtr value) { push_back(Use(value, this)); }
 
-    void Print(int indent) override;
+    void Print() override;
 
     void set_is_func(bool is_func) { is_func_ = is_func; }
 
@@ -122,7 +122,7 @@ public:
         }
     }
 
-    void Print(int indent) override;
+    void Print() override;
 };
 
 class ArgSetterSSA : public User {
@@ -133,10 +133,32 @@ public:
         push_back(Use(value, this));
     }
 
-    void Print(int indent) override;
+    void Print() override;
 
 private:
     int arg_pos_;
+};
+
+class CallSSA : public User {
+public:
+    CallSSA(SSAPtr callee) : User("call->") {
+        reserve(kFuncMaxArgNum + 1);
+        push_back(Use(callee, this));
+    }
+
+    void Print() override;
+
+    void AddArg(SSAPtr arg_setter) { push_back(Use(arg_setter, this)); }
+};
+
+class RtnGetterSSA : public User {
+public:
+    RtnGetterSSA(SSAPtr call) : User("$rtn") {
+        reserve(1);
+        push_back(Use(call, this));
+    }
+
+    void Print() override;
 };
 
 class QuadSSA : public User {
@@ -146,7 +168,7 @@ public:
         And, Xor, Or, Not, Shl, Shr,
         Add, Sub, Mul, Div, Mod, Pow,
         Less, LessEqual, Greater, GreaterEqual, Euqal, NotEqual,
-        /* Break, Continue, */ Call, Return, Import, Export
+        Return, Import, Export
     };
 
     QuadSSA(Operator op, SSAPtr opr1, SSAPtr opr2) : User("inst"), op_(op) {
@@ -161,7 +183,7 @@ public:
         }
     }
 
-    void Print(int indent) override;
+    void Print() override;
 
 private:
     Operator op_;   // TODO: rewrite Operator enum
@@ -179,7 +201,7 @@ public:
         }
     }
 
-    void Print(int indent) override;
+    void Print() override;
 
     IDType id() const { return id_; }
 
