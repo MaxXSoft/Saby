@@ -42,7 +42,9 @@ TypeValue BinaryExpressionAST::SemaAnalyze(Analyzer &ana) {
 
 TypeValue UnaryExpressionAST::SemaAnalyze(Analyzer &ana) {
     auto is_lvalue = operand_->type() == ASTType::Id;
-    auto ret = ana.AnalyzeUnaExpr(operator_id_, operand_->SemaAnalyze(ana), is_lvalue);
+    auto opr_type = operand_->SemaAnalyze(ana);
+    auto ret = ana.AnalyzeUnaExpr(operator_id_, opr_type, is_lvalue);
+    set_operand_type(opr_type);
     set_env(ana.env());
     return ret;
 }
