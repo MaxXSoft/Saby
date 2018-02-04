@@ -153,7 +153,7 @@ public:
 
 class RtnGetterSSA : public User {
 public:
-    RtnGetterSSA(SSAPtr call) : User("$rtn") {
+    RtnGetterSSA(SSAPtr call) : User("rtn-of") {
         reserve(1);
         push_back(Use(call, this));
     }

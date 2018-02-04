@@ -84,6 +84,12 @@ void CallSSA::Print() {
     std::cout << ", arg_num: " << size() - 1 << ')';
 }
 
+void RtnGetterSSA::Print() {
+    std::cout << name() << "(call, ";
+    auto user = static_cast<User *>((*this)[0].value().get());
+    std::cout << (user->size() - 1) << ')';
+}
+
 void QuadSSA::Print() {
     const char *op_str[] = {
         "(num)", "(dec)", "(str)",
