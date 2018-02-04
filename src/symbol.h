@@ -12,12 +12,6 @@
 
 class Environment;
 using EnvPtr = std::shared_ptr<Environment>;
-// variable name -> type info
-using SymbolHash = std::map<std::string, TypeValue>;
-// variable name -> SSA id
-using SymbolID = std::map<std::string, IDType>;
-// store the hash of lib name
-using LibHashSet = std::set<std::size_t>;
 
 inline EnvPtr MakeEnvironment(EnvPtr outer) {
     return std::make_shared<Environment>(outer);
@@ -25,6 +19,9 @@ inline EnvPtr MakeEnvironment(EnvPtr outer) {
 
 class Environment {
 public:
+    // variable name -> SSA id
+    using SymbolID = std::map<std::string, IDType>;
+
     enum class LoadEnvReturn : char {
         Success, FileError, LibConflicted, FuncConflicted
     };
@@ -43,10 +40,16 @@ public:
 
     // used in IR generating process
     SymbolID &id_table() { return id_table_; }
+    IDType &GetIDRef(const std::string &id);
 
     const EnvPtr &outer() const { return outer_; }
 
 private:
+    // variable name -> type info
+    using SymbolHash = std::map<std::string, TypeValue>;
+    // store the hash of lib name
+    using LibHashSet = std::set<std::size_t>;
+
     EnvPtr outer_;
     SymbolHash table_;
     SymbolID id_table_;
