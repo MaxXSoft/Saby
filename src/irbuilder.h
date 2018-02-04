@@ -23,12 +23,16 @@ public:
         return blocks_[current_block_];
     }
 
+    void set_temp_value(SSAPtr temp_value) { temp_value_ = temp_value; }
+    const SSAPtr &temp_value() const { return temp_value_; }
+
 private:
     SSAPtr ReadVariableRecursive(IDType var_id, IDType block_id);
     SSAPtr AddPhiOperands(IDType var_id, SSAPtr &phi);
     SSAPtr TryRemoveTrivialPhi(const SSAPtr &phi);
 
     IDType current_block_, current_var_;
+    SSAPtr temp_value_;
     std::vector<SSAPtrList> current_def_, incomplete_phis_;
     std::vector<std::shared_ptr<BlockSSA>> blocks_;
     std::vector<IDType> sealed_blocks_;

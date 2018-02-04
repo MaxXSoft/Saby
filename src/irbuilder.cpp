@@ -147,4 +147,5 @@ void IRBuilder::Release() {
     for (auto &&it : blocks_) it.reset();
     blocks_.clear();
     current_block_ = current_var_ = 0;
+    temp_value_.reset();
 }
