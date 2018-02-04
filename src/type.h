@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <cstdint>
 
 // store the type info during analyzing process
 using TypeValue = long long;
@@ -23,5 +24,6 @@ constexpr TypeValue kFuncTypeBase = 131;
 
 // store the id of SSA
 using IDType = std::size_t;
+constexpr IDType kIDTypeMax = SIZE_MAX;
 
 #endif // SABY_TYPE_H_
