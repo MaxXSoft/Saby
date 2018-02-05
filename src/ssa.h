@@ -110,8 +110,9 @@ private:
 
 class JumpSSA : public User {
 public:
-    JumpSSA(std::shared_ptr<BlockSSA> block, SSAPtr cond) : User("jump->") {
-        if (cond) {            
+    // JumpSSA(std::shared_ptr<BlockSSA> block, SSAPtr cond) : User("jump->") {
+    JumpSSA(SSAPtr block, SSAPtr cond) : User("jump->") {
+        if (cond) {
             reserve(2);
             push_back(Use(block, this));
             push_back(Use(cond, this));
