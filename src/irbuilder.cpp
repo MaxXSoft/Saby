@@ -134,18 +134,18 @@ void IRBuilder::SealBlock(SSAPtr block) {
 
 void IRBuilder::Release() {
     auto ResetList = [](auto &list) {
+        for (auto &&it : list) it.reset();
+        list.clear();
+    };
+    auto Reset2DList = [&ResetList](auto &list) {
         for (auto &&i : list) {
-            for (auto &&j : i) {
-                j.reset();
-            }
-            i.clear();
+            ResetList(i);
         }
         list.clear();
     };
-    ResetList(current_def_);
-    ResetList(incomplete_phis_);
-    for (auto &&it : blocks_) it.reset();
-    blocks_.clear();
+    Reset2DList(current_def_);
+    Reset2DList(incomplete_phis_);
+    ResetList(blocks_);
+    pred_value_.reset();
     current_block_ = current_var_ = 0;
-    temp_value_.reset();
 }
