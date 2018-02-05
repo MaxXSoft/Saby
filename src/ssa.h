@@ -91,8 +91,8 @@ public:
     BlockSSA(IDType id)
             : User("block:"), id_(id), is_func_(false) {}
 
-    void AddPred(SSAPtr pred) { preds_.push_back(pred); }
-    void AddValue(SSAPtr value) { push_back(Use(value, this)); }
+    void AddPred(SSAPtr pred) { push_back(Use(pred, this)); }
+    void AddValue(SSAPtr value) { insts_.push_back(value); }
 
     void Print() override;
 
@@ -100,12 +100,12 @@ public:
 
     IDType id() const { return id_; }
     bool is_func() const { return is_func_; }
-    const std::list<SSAPtr> &preds() const { return preds_; }
+    const std::list<SSAPtr> &insts() const { return insts_; }
 
 private:
     IDType id_;
     bool is_func_;
-    std::list<SSAPtr> preds_;
+    std::list<SSAPtr> insts_;
 };
 
 class JumpSSA : public User {

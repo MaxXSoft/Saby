@@ -59,10 +59,10 @@ SSAPtr IRBuilder::ReadVariableRecursive(IDType var_id, IDType block_id) {
         phi->set_ref(phi);
         incomplete_phis_[block_id][var_id] = value;
     }
-    else if (blocks_[block_id]->preds().size() == 1) {
+    else if (blocks_[block_id]->size() == 1) {
         // optimize the common case of one predecessor: no phi needed
-        auto pred_0 = blocks_[block_id]->preds().front();
-        value = ReadVariable(var_id,SSACast<BlockSSA>(pred_0)->id());
+        auto pred_0 = (*blocks_[block_id])[0].value();
+        value = ReadVariable(var_id, SSACast<BlockSSA>(pred_0)->id());
     }
     else {
         // break potential cycles with operandless phi
@@ -79,10 +79,10 @@ SSAPtr IRBuilder::ReadVariableRecursive(IDType var_id, IDType block_id) {
 SSAPtr IRBuilder::AddPhiOperands(IDType var_id, SSAPtr &phi) {
     auto phi_ptr = SSACast<PhiSSA>(phi);
     auto block_id = phi_ptr->block_id();
-    auto preds = blocks_[block_id]->preds();
+    auto preds = *blocks_[block_id];
     // determine operands from predecessors
     for (const auto &pred : preds) {
-        auto block_ptr = SSACast<BlockSSA>(pred);
+        auto block_ptr = SSACast<BlockSSA>(pred.value());
         phi_ptr->AddOperand(ReadVariable(var_id, block_ptr->id()));
     }
     return TryRemoveTrivialPhi(phi);
