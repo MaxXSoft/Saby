@@ -220,8 +220,18 @@ TypeValue Analyzer::AnalyzeFunc(const TypeList &args, TypeValue ret_type) {
     return func_type;
 }
 
+TypeValue Analyzer::AnalyzeFuncReturn(TypeValue return_type) {
+    if (return_type != kVoid && !has_return_) {
+        return PrintError("non-void function must have a return value");
+    }
+    else {
+        return kVoid;
+    }
+}
+
 TypeValue Analyzer::AnalyzeCtrlFlow(int ctrlflow_type, TypeValue value) {
     if (ctrlflow_type == kReturn) {
+        has_return_ = true;
         auto ret = env_->GetType("@");
         if (ret != kTypeError) {
             auto ret_type = GetFuncRetType(ret);
