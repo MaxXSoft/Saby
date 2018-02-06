@@ -15,7 +15,8 @@ namespace {
 }
 
 std::shared_ptr<BlockSSA> IRBuilder::NewBlock() {
-    return std::make_shared<BlockSSA>(current_block_++);
+    current_block_ = block_id_gen_++;
+    return std::make_shared<BlockSSA>(current_block_);
 }
 
 std::shared_ptr<VariableSSA> IRBuilder::NewVariable(SSAPtr value) {
@@ -147,5 +148,5 @@ void IRBuilder::Release() {
     Reset2DList(incomplete_phis_);
     ResetList(blocks_);
     pred_value_.reset();
-    current_block_ = current_var_ = 0;
+    current_block_ = block_id_gen_ = current_var_ = 0;
 }
