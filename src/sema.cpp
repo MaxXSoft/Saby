@@ -80,7 +80,9 @@ TypeValue FunctionAST::SemaAnalyze(Analyzer &ana) {
     }
     auto ret = ana.AnalyzeFunc(args_type, return_type_);
 
+    ana.set_has_return(false);
     if (body_->SemaAnalyze(ana) == kTypeError) return kTypeError;
+    if (ana.AnalyzeFuncReturn(return_type_) == kTypeError) return kTypeError;
 
     ana.RestoreEnvironment();
     set_env(ana.nested_env());
