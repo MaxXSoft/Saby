@@ -8,6 +8,15 @@ namespace {
 
 const unsigned int header = 0x72297962;   // 'sabysymb' in T9 keyboard
 
+const EnvPtr &GetEnvOutermost(const EnvPtr &current) {
+    if (!current->outer()) {
+        return current;
+    }
+    else {
+        return GetEnvOutermost(current->outer());
+    }
+}
+
 } // namespace
 
 TypeValue Environment::GetType(const std::string &id, bool recursive) {
@@ -44,14 +53,17 @@ bool Environment::SaveEnv(const char *path, const std::vector<std::string> &syms
     out.write((char *)&header, sizeof(header));
     if (syms[0] == "*") {
         for (const auto &i : table_) {
-            out << i.first << '\0';
-            out.write((char *)&i.second, sizeof(TypeValue));
+            if (i.second >= kFuncTypeBase) {
+                out << i.first << '\0';
+                out.write((char *)&i.second, sizeof(TypeValue));
+            }
         }
     }
     else {   // TODO: reduce algorithm complexity
         for (const auto &i : syms) {
             auto it = table_.find(i);
             if (it == table_.end()) return false;
+            if (it->second < kFuncTypeBase) return false;
             out << it->first << '\0';
             out.write((char *)&it->second, sizeof(TypeValue));
         }
@@ -77,6 +89,9 @@ Environment::LoadEnvReturn Environment::LoadEnv(const char *path) {
     in.read((char *)&head, sizeof(head));
     if (head != header) return LEReturn::FileError;
 
+    // create new environment to save imported symbols
+    auto outer_env = MakeEnvironment(nullptr);
+    auto &table = outer_env->table_;
     std::string id;
     char temp;
     TypeValue type;
@@ -90,7 +105,7 @@ Environment::LoadEnvReturn Environment::LoadEnv(const char *path) {
         }
         else {
             in.read((char *)&type, sizeof(TypeValue));
-            if (!table_.insert(SymbolHash::value_type(id, type)).second) {
+            if (!table.insert(SymbolHash::value_type(id, type)).second) {
                 // there are two functions that have the same name
                 last_status = LEReturn::FuncConflicted;
             }
@@ -99,6 +114,13 @@ Environment::LoadEnvReturn Environment::LoadEnv(const char *path) {
     }
 
     in.close();
+    // set 'outer_env' as outer environment of the outermost environment
+    if (!outer_) {
+        outer_ = outer_env;
+    }
+    else {
+        GetEnvOutermost(outer_)->outer_ = outer_env;
+    }
     return last_status;
 }
 
