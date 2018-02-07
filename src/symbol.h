@@ -3,15 +3,20 @@
 
 #include <string>
 #include <memory>
+#include <utility>
 #include <map>
 #include <vector>
+#include <list>
 #include <set>
 #include <cstddef>
 
 #include "type.h"
 
+// TODO: reimplement this class in an elegant way
+
 class Environment;
 using EnvPtr = std::shared_ptr<Environment>;
+// library info
 using LibListPtr = std::unique_ptr<LibList>;
 
 inline EnvPtr MakeEnvironment(EnvPtr outer) {
@@ -42,9 +47,11 @@ public:
     // used in IR generating process
     SymbolID &id_table() { return id_table_; }
     IDType &GetIDRef(const std::string &id);
+    const LibListPtr &loaded_libs() const { return loaded_libs_; }
+    const LibListPtr &exported_funcs() const { return exported_funcs_; }
 
     const EnvPtr &outer() const { return outer_; }
-    const Environment *outermost() const {
+    Environment *outermost() {
         return !outer_ ? this : GetEnvOutermost(outer_).get();
     }
 
@@ -64,7 +71,7 @@ private:
     SymbolID id_table_;
     // library info
     LibHashPtr lib_hash_;
-    LibListPtr loaded_lib_, exported_lib_;
+    LibListPtr loaded_libs_, exported_funcs_;
 };
 
 #endif // SABY_SYMBOL_H_

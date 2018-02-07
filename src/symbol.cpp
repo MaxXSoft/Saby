@@ -2,7 +2,6 @@
 
 #include <fstream>
 #include <functional>   // std::hash
-#include <utility>
 #include <cassert>
 
 namespace {
@@ -18,7 +17,8 @@ const EnvPtr &Environment::GetEnvOutermost(const EnvPtr &current) const {
 EnvPtr Environment::MakeLibEnv() {
     auto new_env = MakeEnvironment(nullptr);
     new_env->lib_hash_ = std::make_unique<LibHashSet>();
-    new_env->loaded_lib_ = std::make_unique<LibList>();
+    new_env->loaded_libs_ = std::make_unique<LibList>();
+    new_env->exported_funcs_ = std::make_unique<LibList>();
     return std::move(new_env);
 }
 
@@ -79,7 +79,7 @@ bool Environment::SaveEnv(const char *path, const LibList &syms) {
     auto lib_env = GetLibEnv();
     // check if the outer environment of current environment is lib_env
     if (outer_ != lib_env) return false;
-    auto &lib_list = *lib_env->exported_lib_;
+    auto &lib_list = *lib_env->exported_funcs_;
 
     std::ofstream out(path, std::ofstream::binary);
     if (!out.is_open()) return false;
@@ -115,7 +115,7 @@ Environment::LoadEnvReturn Environment::LoadEnv(const char *path, const std::str
     auto lib_env = GetLibEnv();
     auto &table = lib_env->table_;
     auto &hash_set = *lib_env->lib_hash_;
-    auto &lib_list = *lib_env->loaded_lib_;
+    auto &lib_list = *lib_env->loaded_libs_;
 
     auto str_hash = std::hash<std::string>()(path);
     if (!hash_set.insert(str_hash).second) {   // TODO
