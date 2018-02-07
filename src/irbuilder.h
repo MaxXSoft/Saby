@@ -2,14 +2,18 @@
 #define SABY_IRBUILDER_H_
 
 #include <vector>
-#include <utility>
 #include <stack>
+#include <list>
+#include <utility>
 #include <cassert>
 
 #include "ssa.h"
+#include "type.h"
 
 // break & continue information
 using BreakContPair = std::pair<SSAPtr, SSAPtr>;
+// exported functions information
+using FuncIdPair = std::pair<std::string, IDType>;
 
 class IRBuilder {
 public:
@@ -39,6 +43,8 @@ public:
     void set_pred_value(SSAPtr pred_value) { pred_value_ = pred_value; }
     const SSAPtr &pred_value() const { return pred_value_; }
     std::stack<BreakContPair> &break_cont_stack() { return break_cont_stack_; }
+    LibList &imported_libs() { return imported_libs_; }
+    std::list<FuncIdPair> &exported_funcs() { return exported_funcs_; }
 
 private:
     SSAPtr ReadVariableRecursive(IDType var_id, IDType block_id);
@@ -51,9 +57,13 @@ private:
     SSAPtr pred_value_;
     // used in 'while' generating
     std::stack<BreakContPair> break_cont_stack_;
+    // info of vars & blocks & phis
     std::vector<SSAPtrList> current_def_, incomplete_phis_;
     std::vector<std::shared_ptr<BlockSSA>> blocks_;
     std::vector<IDType> sealed_blocks_;
+    // library info
+    LibList imported_libs_;
+    std::list<FuncIdPair> exported_funcs_;
 };
 
 #endif // SABY_IRBUIDER_H_
