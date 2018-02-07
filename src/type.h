@@ -2,6 +2,7 @@
 #define SABY_TYPE_H_
 
 #include <vector>
+#include <list>
 #include <string>
 #include <utility>
 #include <cstdint>
@@ -14,7 +15,8 @@ using VarType = std::pair<std::string, TypeValue>;
 using VarTypeList = std::vector<VarType>;
 
 // store the libs which are imported/exported
-using LibList = std::vector<std::string>;
+// store the library info during semantic analysis
+using LibList = std::list<std::string>;
 
 constexpr TypeValue kTypeError = -1;
 
