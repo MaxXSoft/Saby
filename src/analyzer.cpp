@@ -267,7 +267,7 @@ TypeValue Analyzer::AnalyzeExtern(int ext_type, const LibList &libs) {
                 continue;
             }
             using LEReturn = Environment::LoadEnvReturn;
-            switch (env_->LoadEnv(cur_lib.c_str())) {
+            switch (env_->LoadEnv(cur_lib.c_str(), i)) {
                 case LEReturn::FileError: {
                     return PrintError("cannot be imported", i.c_str());
                 }
