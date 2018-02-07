@@ -27,6 +27,10 @@ void ArgGetterSSA::Print() {
     std::cout << name() << '(' << arg_id_ << ')';
 }
 
+void ExternFuncSSA::Print() {
+    std::cout << name() << '(' << func_name_ << ')';
+}
+
 void AsmSSA::Print() {
     std::cout << name() << std::endl << '\t';
     for (const auto &i : text_) {

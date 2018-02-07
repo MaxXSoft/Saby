@@ -42,6 +42,18 @@ private:
     IDType arg_id_;
 };
 
+// used to represent definition of external function
+class ExternFuncSSA : public Value {
+public:
+    ExternFuncSSA(const std::string &func_name)
+            : Value("#ext"), func_name_(func_name) {}
+
+    void Print() override;
+
+private:
+    std::string func_name_;
+};
+
 // store inline assembly block
 // NOTICE: nothing can use it although it's a 'Value'
 class AsmSSA : public Value {
@@ -110,7 +122,7 @@ private:
 
 class JumpSSA : public User {
 public:
-    // JumpSSA(std::shared_ptr<BlockSSA> block, SSAPtr cond) : User("jump->") {
+    // NOTICE: 'block' must be a 'BlockSSA'
     JumpSSA(SSAPtr block, SSAPtr cond) : User("jump->") {
         if (cond) {
             reserve(2);
@@ -169,7 +181,7 @@ public:
         And, Xor, Or, Not, Shl, Shr,
         Add, Sub, Mul, Div, Mod, Pow,
         Less, LessEqual, Greater, GreaterEqual, Euqal, NotEqual,
-        Return, Import, Export
+        Return
     };
 
     QuadSSA(Operator op, SSAPtr opr1, SSAPtr opr2) : User("inst"), op_(op) {
