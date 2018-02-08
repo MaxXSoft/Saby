@@ -30,7 +30,10 @@ public:
         nested_env_ = MakeEnvironment(env_);
         env_ = nested_env_;
     }
-    void RestoreEnvironment() { env_ = env_->outer(); }
+    void RestoreEnvironment() {
+        env_ = env_->outer();
+        if (nested_env_->outer() != env_) nested_env_ = nested_env_->outer();
+    }
 
     // NOTICE: absolute path requited!
     void set_lib_path(const std::string &lib_path) {
