@@ -16,35 +16,34 @@ namespace {
 
 std::shared_ptr<BlockSSA> IRBuilder::NewBlock() {
     current_block_ = block_id_gen_++;
-    return std::make_shared<BlockSSA>(current_block_);
+    auto new_block = std::make_shared<BlockSSA>(current_block_);
+    blocks_.push_back(new_block);
+    current_def_.push_back({});
+    incomplete_phis_.push_back({});
+    return new_block;
 }
 
 std::shared_ptr<VariableSSA> IRBuilder::NewVariable(SSAPtr value) {
     auto var_id = current_var_++;
-    WriteVariable(var_id, current_block_, value);
-    return std::make_shared<VariableSSA>(var_id, value);
+    auto var_ssa = std::make_shared<VariableSSA>(var_id, value);
+    WriteVariable(var_id, current_block_, var_ssa);
+    return var_ssa;
 }
 
 void IRBuilder::WriteVariable(IDType var_id, IDType block_id, SSAPtr value) {
-    if (block_id < current_def_.size()) {
-        auto &current_var_list = current_def_[block_id];
-        if (var_id < current_var_list.size()) {
-            current_var_list[var_id] = value;
-        }
-        else if (var_id == current_var_list.size()) {
-            current_var_list.push_back(value);
-        }
-    }
-    else if (block_id == current_def_.size()) {
-        current_def_.push_back({});
-        WriteVariable(var_id, block_id, value);
-    }
+    // NOTICE: 'var_id' in 'current_def_[block_id]' may not continuously
+    assert(block_id <= current_def_.size());
+    if (block_id == current_def_.size()) current_def_.push_back({});
+    auto &current_var_list = current_def_[block_id];
+    current_var_list[var_id] = value;
 }
 
 SSAPtr IRBuilder::ReadVariable(IDType var_id, IDType block_id) {
-    if (var_id < current_def_[block_id].size()) {
+    const auto &current_var_list = current_def_[block_id];
+    auto it = current_var_list.find(var_id);
+    if (it != current_var_list.end()) {
         // local value numbering
-        return current_def_[block_id][var_id];
+        return it->second;
     }
     // global value numbering
     return ReadVariableRecursive(var_id, block_id);
@@ -126,8 +125,8 @@ void IRBuilder::SealBlock(SSAPtr block) {
     if (it == sealed_blocks_.end()) {
         auto &phi_list = incomplete_phis_[block_id];
         // TODO: test
-        for (int id = 0; id < phi_list.size(); ++id) {
-            AddPhiOperands(id, phi_list[id]);
+        for (auto &&it : phi_list) {
+            AddPhiOperands(it.first, it.second);
         }
         sealed_blocks_.push_back(block_id);
     }
@@ -138,9 +137,13 @@ void IRBuilder::Release() {
         for (auto &&it : list) it.reset();
         list.clear();
     };
-    auto Reset2DList = [&ResetList](auto &list) {
+    auto ResetMap = [](auto &map) {
+        for (auto &&it : map) it.second.reset();
+        map.clear();
+    };
+    auto Reset2DList = [&ResetMap](auto &list) {
         for (auto &&i : list) {
-            ResetList(i);
+            ResetMap(i);
         }
         list.clear();
     };

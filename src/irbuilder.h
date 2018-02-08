@@ -2,6 +2,7 @@
 #define SABY_IRBUILDER_H_
 
 #include <vector>
+#include <map>
 #include <stack>
 #include <list>
 #include <utility>
@@ -47,6 +48,8 @@ public:
     std::list<FuncIdPair> &exported_funcs() { return exported_funcs_; }
 
 private:
+    using SSAPtrMap = std::map<IDType, SSAPtr>;
+
     SSAPtr ReadVariableRecursive(IDType var_id, IDType block_id);
     SSAPtr AddPhiOperands(IDType var_id, SSAPtr &phi);
     SSAPtr TryRemoveTrivialPhi(const SSAPtr &phi);
@@ -57,8 +60,9 @@ private:
     SSAPtr pred_value_;
     // used in 'while' generating
     std::stack<BreakContPair> break_cont_stack_;
-    // info of vars & blocks & phis
-    std::vector<SSAPtrList> current_def_, incomplete_phis_;
+    // info of defs & blocks & phis
+    // TODO: consider use map<ID, map<ID, Ptr>> to store defs & phis
+    std::vector<SSAPtrMap> current_def_, incomplete_phis_;
     std::vector<std::shared_ptr<BlockSSA>> blocks_;
     std::vector<IDType> sealed_blocks_;
     // library info
