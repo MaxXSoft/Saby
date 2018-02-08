@@ -1,6 +1,5 @@
 #include "ast.h"
 
-#include <iostream>
 #include <set>
 #include <cassert>
 
@@ -127,12 +126,14 @@ SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb) {
             auto op = GetOperator(operator_id_);
             auto quad = std::make_shared<QuadSSA>(op, opr_ssa, nullptr);
             value = irb.NewVariable(quad);
+            break;
         }
         case kNot: {
             // like '~a'
             auto op = QuadSSA::Operator::Not;
             auto quad = std::make_shared<QuadSSA>(op, opr_ssa, nullptr);
             value = irb.NewVariable(quad);
+            break;
         }
         case kSub: {
             // like '-a'
@@ -141,6 +142,7 @@ SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb) {
             auto num_value = GetValueByType(operand_type_, 0);
             auto quad = std::make_shared<QuadSSA>(op, num_value, opr_ssa);
             value = irb.NewVariable(quad);
+            break;
         }
         case kInc: case kDec: {
             // like '++a'
@@ -157,6 +159,7 @@ SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb) {
             // update variable id
             var_id = new_var->id();
             value = new_var;
+            break;
         }
     }
     // add to block
@@ -223,6 +226,7 @@ SSAPtr FunctionAST::GenIR(IRBuilder &irb) {
     // generate jump statement & add to entry
     auto jump_ssa = std::make_shared<JumpSSA>(body_ssa, nullptr);
     cur_block->AddValue(jump_ssa);
+    cur_block->set_is_func(true);
     // switch back to old block
     irb.SwitchCurrentBlock(old_block->id());
     return cur_block;
@@ -349,6 +353,7 @@ SSAPtr ExternalAST::GenIR(IRBuilder &irb) {
             auto ext_func = std::make_shared<ExternFuncSSA>(i);
             auto var_ssa = irb.NewVariable(ext_func);
             // get func name & save var id
+            // TODO: consider the efficiency of 'substr'
             auto &&func_name = i.substr(i.find('.') + 1);
             lib_env->id_table()[func_name] = var_ssa->id();
             cur_block->AddValue(var_ssa);
