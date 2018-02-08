@@ -22,11 +22,14 @@ int main(int argc, const char *argv[]) {
     analyzer.set_lib_path(lib_path);
     analyzer.set_sym_path(sym_path);
 
+    auto entry = irb.NewBlock();
+
     while (auto ast = parser.ParseNext()) {
         if (ast->SemaAnalyze(analyzer) == kTypeError) break;
-        // ast->GenIR();
-        // std::cout << std::endl;
+        ast->GenIR(irb);
     }
+    entry->Print();
+    std::cout << std::endl;
 
     auto err_num = lexer.error_num() + parser.error_num() + analyzer.error_num();
     if (err_num == 1) {
