@@ -97,7 +97,9 @@ TypeValue AsmAST::SemaAnalyze(Analyzer &ana) {
 TypeValue IfAST::SemaAnalyze(Analyzer &ana) {
     if (cond_->SemaAnalyze(ana) == kTypeError) return kTypeError;
     if (then_->SemaAnalyze(ana) == kTypeError) return kTypeError;
-    if (else_then_->SemaAnalyze(ana) == kTypeError) return kTypeError;
+    if (else_then_) {
+        if (else_then_->SemaAnalyze(ana) == kTypeError) return kTypeError;
+    }
     set_env(ana.env());
     return kVoid;
 }

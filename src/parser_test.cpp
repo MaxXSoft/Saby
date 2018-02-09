@@ -23,13 +23,17 @@ int main(int argc, const char *argv[]) {
     analyzer.set_sym_path(sym_path);
 
     auto entry = irb.NewBlock();
-
     while (auto ast = parser.ParseNext()) {
         if (ast->SemaAnalyze(analyzer) == kTypeError) break;
         ast->GenIR(irb);
     }
-    entry->Print();
-    std::cout << std::endl;
+    irb.SealBlocks();
+
+    // print all of the blocks
+    for (const auto &i : irb.blocks()) {
+        i->Print();
+        std::cout << std::endl;
+    }
 
     auto err_num = lexer.error_num() + parser.error_num() + analyzer.error_num();
     if (err_num == 1) {

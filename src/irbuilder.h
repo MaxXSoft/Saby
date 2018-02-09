@@ -27,6 +27,7 @@ public:
     void WriteVariable(IDType var_id, IDType block_id, SSAPtr value);
     SSAPtr ReadVariable(IDType var_id, IDType block_id);
     void SealBlock(SSAPtr block);
+    void SealBlocks();
 
     void Release();
 
@@ -42,8 +43,10 @@ public:
     }
 
     void set_pred_value(SSAPtr pred_value) { pred_value_ = pred_value; }
+
     const SSAPtr &pred_value() const { return pred_value_; }
     std::stack<BreakContPair> &break_cont_stack() { return break_cont_stack_; }
+    const std::vector<std::shared_ptr<BlockSSA>> &blocks() const { return blocks_; }
     LibList &imported_libs() { return imported_libs_; }
     std::list<FuncIdPair> &exported_funcs() { return exported_funcs_; }
 

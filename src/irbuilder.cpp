@@ -132,6 +132,12 @@ void IRBuilder::SealBlock(SSAPtr block) {
     }
 }
 
+void IRBuilder::SealBlocks() {
+    for (auto &&i : blocks_) {
+        SealBlock(i);
+    }
+}
+
 void IRBuilder::Release() {
     auto ResetList = [](auto &list) {
         for (auto &&it : list) it.reset();

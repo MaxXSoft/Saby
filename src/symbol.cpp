@@ -158,6 +158,17 @@ Environment::LoadEnvReturn Environment::LoadEnv(const char *path, const std::str
     return last_status;
 }
 
+IDType &Environment::GetIDRecursive(const std::string &id) {
+    auto it = id_table_.find(id);
+    if (it != id_table_.end()) {
+        return it->second;
+    }
+    else {
+        assert(outer_ != nullptr);
+        return outer_->GetIDRecursive(id);
+    }
+}
+
 IDType &Environment::GetIDRef(const std::string &id) {
     /*
         NOTICE: consider the following situation:
@@ -177,7 +188,8 @@ IDType &Environment::GetIDRef(const std::string &id) {
         return it->second;
     }
     else {
-        assert(outer_ != nullptr);
-        return outer_->GetIDRef(id);
+        auto var_id = outer_->GetIDRecursive(id);
+        auto it = id_table_.insert({id, var_id}).first;
+        return it->second;
     }
 }

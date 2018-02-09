@@ -72,7 +72,7 @@ void UndefSSA::Print() {
 void PhiSSA::Print() {
     std::cout << name() << '(';
     for (const auto &it : *this) {
-        it.value()->Print();
+        PrintValue(it.value());
         std::cout << ", ";
     }
     std::cout << "\b\b)";

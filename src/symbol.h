@@ -65,6 +65,7 @@ private:
     const EnvPtr &GetEnvOutermost(const EnvPtr &current) const;
     EnvPtr MakeLibEnv();
     EnvPtr GetLibEnv();
+    IDType &GetIDRecursive(const std::string &id);
 
     EnvPtr outer_;
     SymbolHash table_;

@@ -198,7 +198,7 @@ SSAPtr BlockAST::GenIR(IRBuilder &irb) {
     }
     // TODO: make sure you should do this during this process
     // seal block
-    irb.SealBlock(cur_block);
+    // irb.SealBlock(cur_block);
     return cur_block;
 }
 
@@ -259,6 +259,8 @@ SSAPtr IfAST::GenIR(IRBuilder &irb) {
     auto jump_cond = std::make_shared<JumpSSA>(if_block, cond_ssa);
     auto jump_end = std::make_shared<JumpSSA>(end_block, nullptr);
     cur_block->AddValue(jump_cond);
+    auto if_block_ptr = static_cast<BlockSSA *>(if_block.get());
+    if_block_ptr->AddValue(jump_end);
     if (else_block) {
         auto jump_else = std::make_shared<JumpSSA>(else_block, nullptr);
         cur_block->AddValue(jump_else);
@@ -269,7 +271,7 @@ SSAPtr IfAST::GenIR(IRBuilder &irb) {
         cur_block->AddValue(jump_end);
     }
     // seal block
-    irb.SealBlock(cur_block);
+    // irb.SealBlock(cur_block);
     return nullptr;
 }
 
@@ -303,8 +305,8 @@ SSAPtr WhileAST::GenIR(IRBuilder &irb) {
     auto body_block_ptr = static_cast<BlockSSA *>(while_body.get());
     body_block_ptr->AddValue(jump_body);
     // seal blocks
-    irb.SealBlock(cur_block);
-    irb.SealBlock(while_entry);
+    // irb.SealBlock(cur_block);
+    // irb.SealBlock(while_entry);
     // switch current block to 'while_end'
     irb.SwitchCurrentBlock(while_end->id());
     return nullptr;
