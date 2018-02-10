@@ -23,11 +23,12 @@ int main(int argc, const char *argv[]) {
     analyzer.set_sym_path(sym_path);
 
     auto entry = irb.NewBlock();
+    irb.SealBlock(entry);
     while (auto ast = parser.ParseNext()) {
         if (ast->SemaAnalyze(analyzer) == kTypeError) break;
         ast->GenIR(irb);
     }
-    irb.SealBlocks();
+    // irb.SealBlocks();
 
     // print all of the blocks
     for (const auto &i : irb.blocks()) {

@@ -191,14 +191,15 @@ SSAPtr BlockAST::GenIR(IRBuilder &irb) {
     auto cur_block = irb.NewBlock();
     // handle pred
     const auto &pred = irb.pred_value();
-    if (pred) cur_block->AddPred(pred);
+    if (pred) {
+        cur_block->AddPred(pred);
+        // seal block because predecessor has been determined
+        irb.SealBlock(cur_block);
+    }
     // generate body
     for (const auto &i : expr_list_) {
         i->GenIR(irb);
     }
-    // TODO: make sure you should do this during this process
-    // seal block
-    // irb.SealBlock(cur_block);
     return cur_block;
 }
 
@@ -206,7 +207,7 @@ SSAPtr FunctionAST::GenIR(IRBuilder &irb) {
     auto old_block = irb.GetCurrentBlock();
     // generate function entry
     auto cur_block = irb.NewBlock();
-    // TODO: implement GetBlockBySSA (NOTE: do this in code gen proc)
+    irb.SealBlock(cur_block);
     for (int i = 0; i < args_.size(); ++i) {
         auto id_ast = static_cast<IdentifierAST *>(args_[i].get());
         auto getter_ssa = std::make_shared<ArgGetterSSA>(i);
@@ -251,10 +252,13 @@ SSAPtr IfAST::GenIR(IRBuilder &irb) {
     if (else_then_) else_block = else_then_->GenIR(irb);
     // reset pred
     irb.set_pred_value(nullptr);
+    // // re-get current block because 'else' can contain another 'if'
+    // cur_block = irb.GetCurrentBlock();
     // generate end block & add preds
     auto end_block = irb.NewBlock();
     end_block->AddPred(if_block);
     end_block->AddPred(else_block ? else_block : cur_block);
+    irb.SealBlock(end_block);
     // generate jump statements
     auto jump_cond = std::make_shared<JumpSSA>(if_block, cond_ssa);
     auto jump_end = std::make_shared<JumpSSA>(end_block, nullptr);
