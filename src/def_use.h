@@ -16,16 +16,6 @@ class Use;
 using SSAPtr = std::shared_ptr<Value>;
 using SSAPtrList = std::vector<SSAPtr>;
 
-template <typename T>
-inline T *SSACast(const SSAPtr &ptr) {
-    return dynamic_cast<T *>(ptr.get());
-}
-
-template <typename T>
-inline T *SSACast(Value *ptr) {
-    return dynamic_cast<T *>(ptr);
-}
-
 class Value {
 public:
     using ListIter = std::list<Use *>::iterator;

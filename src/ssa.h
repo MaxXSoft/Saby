@@ -7,6 +7,14 @@
 #include <string>
 #include <cstddef>
 
+#if NDEBUG
+#define SABY_INLINE inline
+#else   // SSACast assertion on debug mode
+#define SABY_INLINE
+#include <type_traits>
+#include <cassert>
+#endif
+
 #include "type.h"
 #include "def_use.h"
 
@@ -79,7 +87,6 @@ public:
 
     void AddOperand(SSAPtr opr) { push_back(Use(opr, this)); }
     void ReplaceBy(SSAPtr &ssa) {
-        // TODO: check conversion is valid
         auto value = static_cast<Value *>(this);
         for (auto &&use : *value) {
             use->set_value(ssa);   // TODO: test
@@ -221,5 +228,44 @@ public:
 private:
     IDType id_;
 };
+
+template <typename T>
+SABY_INLINE T *SSACast(Value *ptr) {
+#if !defined(NDEBUG)   // check if it's a valid cast on debug mode
+    const auto &name = ptr->name();
+    switch (name[0]) {
+        case '#': {
+            switch (name[1]) {
+                case 'n': case 'd':
+                case 's': assert((std::is_same<T, ValueSSA>::value)); break;
+                case 'a': assert((std::is_same<T, ArgGetterSSA>::value)); break;
+                case 'e': assert((std::is_same<T, ExternFuncSSA>::value)); break;
+                case 'u': assert((std::is_same<T, UndefSSA>::value)); break;
+            }
+            break;
+        }
+        case '$': {
+            switch (name[1]) {
+                case 'a': assert((std::is_same<T, ArgSetterSSA>::value)); break;
+                case 'v': assert((std::is_same<T, VariableSSA>::value)); break;
+            }
+            break;
+        }
+        case 'a': assert((std::is_same<T, AsmSSA>::value)); break;
+        case 'p': assert((std::is_same<T, PhiSSA>::value)); break;
+        case 'b': assert((std::is_same<T, BlockSSA>::value)); break;
+        case 'j': assert((std::is_same<T, JumpSSA>::value)); break;
+        case 'c': assert((std::is_same<T, CallSSA>::value)); break;
+        case 'r': assert((std::is_same<T, RtnGetterSSA>::value)); break;
+        case 'i': assert((std::is_same<T, QuadSSA>::value)); break;
+    }
+#endif
+    return static_cast<T *>(ptr);
+}
+
+template <typename T>
+inline T *SSACast(const SSAPtr &ptr) {
+    return SSACast<T>(ptr.get());
+}
 
 #endif // SABY_SSA_H_
