@@ -6,18 +6,22 @@
 
 namespace {
 
-// TODO: reimplement this function
 void PrintValue(const SSAPtr &value) {
-    auto block_ptr = SSACast<BlockSSA>(value);
-    if (block_ptr) {
-        std::cout << "(block: " << block_ptr->id() << ')';
-    }
-    else {
-        auto var_ptr = SSACast<VariableSSA>(value);
-        if (var_ptr) {
-            std::cout << "$var_" << var_ptr->id();
+    const auto &name = value->name();
+    switch (name[0]) {
+        case 'b': {
+            auto block_ptr = static_cast<BlockSSA *>(value.get());
+            std::cout << "{block: " << block_ptr->id() << '}';
+            break;
         }
-        else {
+        case '$': {
+            if (name[1] == 'v') {
+                auto var_ptr = static_cast<VariableSSA *>(value.get());
+                std::cout << "$var_" << var_ptr->id();
+                break;
+            }
+        }
+        default: {
             value->Print();
         }
     }
@@ -89,9 +93,9 @@ void BlockSSA::Print() {
 }
 
 void JumpSSA::Print() {
-    std::cout << name() << "(block: ";
+    std::cout << name() << "{block: ";
     std::cout << SSACast<BlockSSA>((*this)[0].value())->id();
-    std::cout << ')';
+    std::cout << '}';
     if (size() == 2) {
         std::cout << " if ";
         PrintValue((*this)[1].value());
