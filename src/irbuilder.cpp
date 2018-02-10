@@ -124,7 +124,6 @@ void IRBuilder::SealBlock(SSAPtr block) {
     auto it = std::find(sealed_blocks_.begin(), sealed_blocks_.end(), block_id);
     if (it == sealed_blocks_.end()) {
         auto &phi_list = incomplete_phis_[block_id];
-        // TODO: test
         for (auto &&it : phi_list) {
             AddPhiOperands(it.first, it.second);
         }
