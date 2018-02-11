@@ -248,12 +248,23 @@ SSAPtr IfAST::GenIR(IRBuilder &irb) {
     irb.set_pred_value(cur_block);
     // generate if-else body
     SSAPtr if_block = then_->GenIR(irb);
-    SSAPtr else_block = nullptr;
-    if (else_then_) else_block = else_then_->GenIR(irb);
+    SSAPtr else_block = nullptr, else_end_block = nullptr;
+    if (else_then_) {
+        // handle 'else-if' structure separately
+        if (else_then_->type() == ExpressionAST::ASTType::If) {
+            auto new_block = irb.NewBlock();
+            new_block->AddPred(cur_block);
+            else_block = new_block;
+            irb.SealBlock(else_block);
+            else_end_block = else_then_->GenIR(irb);
+        }
+        else {   // else_then_->type() == ASTType::Block
+            else_block = else_then_->GenIR(irb);
+            else_end_block = else_block;
+        }
+    }
     // reset pred
     irb.set_pred_value(nullptr);
-    // // re-get current block because 'else' can contain another 'if'
-    // cur_block = irb.GetCurrentBlock();
     // generate end block & add preds
     auto end_block = irb.NewBlock();
     end_block->AddPred(if_block);
@@ -268,15 +279,13 @@ SSAPtr IfAST::GenIR(IRBuilder &irb) {
     if (else_block) {
         auto jump_else = std::make_shared<JumpSSA>(else_block, nullptr);
         cur_block->AddValue(jump_else);
-        auto else_block_ptr = static_cast<BlockSSA *>(else_block.get());
-        else_block_ptr->AddValue(jump_end);
+        auto else_end_ptr = static_cast<BlockSSA *>(else_end_block.get());
+        else_end_ptr->AddValue(jump_end);
     }
     else {
         cur_block->AddValue(jump_end);
     }
-    // seal block
-    // irb.SealBlock(cur_block);
-    return nullptr;
+    return end_block;
 }
 
 SSAPtr WhileAST::GenIR(IRBuilder &irb) {
