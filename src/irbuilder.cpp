@@ -8,12 +8,6 @@
 #include <utility>
 #include <algorithm>
 
-namespace {
-
-//
-
-}
-
 std::shared_ptr<BlockSSA> IRBuilder::NewBlock() {
     current_block_ = block_id_gen_++;
     auto new_block = std::make_shared<BlockSSA>(current_block_);
@@ -23,22 +17,21 @@ std::shared_ptr<BlockSSA> IRBuilder::NewBlock() {
     return new_block;
 }
 
-std::shared_ptr<VariableSSA> IRBuilder::NewVariable(SSAPtr value) {
-    auto var_id = current_var_++;
-    auto var_ssa = std::make_shared<VariableSSA>(var_id, value);
-    WriteVariable(var_id, current_block_, var_ssa);
+std::shared_ptr<VariableSSA> IRBuilder::NewVariable(const IDType &id, SSAPtr value) {
+    auto var_ssa = std::make_shared<VariableSSA>(id, value);
+    WriteVariable(id, current_block_, var_ssa);
     return var_ssa;
 }
 
-void IRBuilder::WriteVariable(IDType var_id, IDType block_id, SSAPtr value) {
-    // NOTICE: 'var_id' in 'current_def_[block_id]' may not continuously
+void IRBuilder::WriteVariable(const IDType &var_id, BlockIDType block_id, SSAPtr value) {
     assert(block_id <= current_def_.size());
     if (block_id == current_def_.size()) current_def_.push_back({});
     auto &current_var_list = current_def_[block_id];
     current_var_list[var_id] = value;
 }
 
-SSAPtr IRBuilder::ReadVariable(IDType var_id, IDType block_id) {
+SSAPtr IRBuilder::ReadVariable(const IDType &var_id, BlockIDType block_id) {
+    assert(block_id <= current_def_.size());
     const auto &current_var_list = current_def_[block_id];
     auto it = current_var_list.find(var_id);
     if (it != current_var_list.end()) {
@@ -49,7 +42,7 @@ SSAPtr IRBuilder::ReadVariable(IDType var_id, IDType block_id) {
     return ReadVariableRecursive(var_id, block_id);
 }
 
-SSAPtr IRBuilder::ReadVariableRecursive(IDType var_id, IDType block_id) {
+SSAPtr IRBuilder::ReadVariableRecursive(const IDType &var_id, BlockIDType block_id) {
     SSAPtr value;
     auto it = std::find(sealed_blocks_.begin(), sealed_blocks_.end(), block_id);
     if (it == sealed_blocks_.end()) {
@@ -76,7 +69,7 @@ SSAPtr IRBuilder::ReadVariableRecursive(IDType var_id, IDType block_id) {
     return value;
 }
 
-SSAPtr IRBuilder::AddPhiOperands(IDType var_id, SSAPtr &phi) {
+SSAPtr IRBuilder::AddPhiOperands(const IDType &var_id, SSAPtr &phi) {
     auto phi_ptr = SSACast<PhiSSA>(phi);
     auto block_id = phi_ptr->block_id();
     auto preds = *blocks_[block_id];
@@ -131,12 +124,7 @@ void IRBuilder::SealBlock(SSAPtr block) {
     }
 }
 
-void IRBuilder::SealBlocks() {
-    for (auto &&i : blocks_) {
-        SealBlock(i);
-    }
-}
-
+// TODO: rewrite
 void IRBuilder::Release() {
     auto ResetList = [](auto &list) {
         for (auto &&it : list) it.reset();
@@ -156,5 +144,5 @@ void IRBuilder::Release() {
     Reset2DList(incomplete_phis_);
     ResetList(blocks_);
     pred_value_.reset();
-    current_block_ = block_id_gen_ = current_var_ = 0;
+    current_block_ = block_id_gen_ = 0;
 }
