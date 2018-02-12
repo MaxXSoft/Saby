@@ -1,10 +1,18 @@
 #include "ssa.h"
 
 #include <iostream>
+#include <iomanip>
 #include <utility>
 #include <cstdio>
 
 namespace {
+
+void PrintVarName(const std::string &id, VariableSSA *ptr) {
+    std::cout << '$' << id << '_';
+    auto ptr_id = reinterpret_cast<BlockIDType>(ptr);
+    std::cout << std::hex << std::setw(3) << std::setfill('0');
+    std::cout << ((ptr_id >> 4) & 0xFFF);
+}
 
 void PrintValue(const SSAPtr &value) {
     const auto &name = value->name();
@@ -17,7 +25,7 @@ void PrintValue(const SSAPtr &value) {
         case '$': {
             if (name[1] == 'v') {
                 auto var_ptr = static_cast<VariableSSA *>(value.get());
-                std::cout << "$var_" << var_ptr->id();
+                PrintVarName(var_ptr->id(), var_ptr);
                 break;
             }
         }
@@ -75,21 +83,31 @@ void UndefSSA::Print() {
 
 void PhiSSA::Print() {
     std::cout << name() << '(';
-    for (const auto &it : *this) {
-        PrintValue(it.value());
-        std::cout << ", ";
+    for (auto it = begin(); it != end(); ++it) {
+        PrintValue(it->value());
+        if (it != end() - 1) std::cout << ", ";
     }
-    std::cout << "\b\b)";
+    std::cout << ')';
 }
 
 void BlockSSA::Print() {
-    std::cout << name() << ' ' << id_ << std::endl;
+    std::cout << name() << ' ' << id_ << std::endl << "preds: ";
+    if (!size()) {
+        std::cout << "null";
+    }
+    else {
+        for (auto it = begin(); it != end(); ++it) {
+            auto block_ptr = SSACast<BlockSSA>(it->value());
+            std::cout << "{block: " << block_ptr->id() << '}';
+            if (it != end() - 1) std::cout << ", ";
+        }
+    }
+    std::cout << std::endl;
     for (const auto &it : insts_) {
         std::cout << '\t';
         it->Print();
         std::cout << std::endl;
     }
-    std::cout << '\b';
 }
 
 void JumpSSA::Print() {
@@ -137,7 +155,7 @@ void QuadSSA::Print() {
 }
 
 void VariableSSA::Print() {
-    std::cout << name() << '_' << id_;
+    PrintVarName(id_, this);
     if ((*this).size()) {
         std::cout << " = ";
         PrintValue((*this)[0].value());

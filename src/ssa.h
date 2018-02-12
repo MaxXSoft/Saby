@@ -42,12 +42,12 @@ private:
 // used to represent arguments in the body of a function
 class ArgGetterSSA : public Value {
 public:
-    ArgGetterSSA(IDType arg_id) : Value("#arg"), arg_id_(arg_id) {}
+    ArgGetterSSA(int arg_id) : Value("#arg"), arg_id_(arg_id) {}
 
     void Print() override;
 
 private:
-    IDType arg_id_;
+    int arg_id_;
 };
 
 // used to represent definition of external function
@@ -83,7 +83,7 @@ public:
 
 class PhiSSA : public User {
 public:
-    PhiSSA(IDType block_id) : User("phi"), block_id_(block_id) {}
+    PhiSSA(BlockIDType block_id) : User("phi"), block_id_(block_id) {}
 
     void AddOperand(SSAPtr opr) { push_back(Use(opr, this)); }
     void ReplaceBy(SSAPtr &ssa) {
@@ -98,16 +98,16 @@ public:
     void set_ref(const std::shared_ptr<PhiSSA> &phi) { ref_ = phi; }
     SSAPtr ref() { return ref_.lock(); }
 
-    IDType block_id() const { return block_id_; }
+    BlockIDType block_id() const { return block_id_; }
 
 private:
-    IDType block_id_;
+    BlockIDType block_id_;
     std::weak_ptr<PhiSSA> ref_;
 };
 
 class BlockSSA : public User {
 public:
-    BlockSSA(IDType id)
+    BlockSSA(BlockIDType id)
             : User("block:"), id_(id), is_func_(false) {}
 
     void AddPred(SSAPtr pred) { push_back(Use(pred, this)); }
@@ -117,12 +117,12 @@ public:
 
     void set_is_func(bool is_func) { is_func_ = is_func; }
 
-    IDType id() const { return id_; }
+    BlockIDType id() const { return id_; }
     bool is_func() const { return is_func_; }
     const std::list<SSAPtr> &insts() const { return insts_; }
 
 private:
-    IDType id_;
+    BlockIDType id_;
     bool is_func_;
     std::list<SSAPtr> insts_;
 };
@@ -211,19 +211,14 @@ private:
 
 class VariableSSA : public User {
 public:
-    VariableSSA(IDType id, SSAPtr value) : User("$var"), id_(id) {
-        if (value) {
-            reserve(1);
-            push_back(Use(value, this));
-        }
-        else {
-            reserve(0);
-        }
+    VariableSSA(const IDType &id, SSAPtr value) : User("$var"), id_(id) {
+        reserve(1);
+        push_back(Use(value, this));
     }
 
     void Print() override;
 
-    IDType id() const { return id_; }
+    const IDType &id() const { return id_; }
 
 private:
     IDType id_;
