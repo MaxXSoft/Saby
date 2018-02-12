@@ -157,39 +157,3 @@ Environment::LoadEnvReturn Environment::LoadEnv(const char *path, const std::str
     in.close();
     return last_status;
 }
-
-IDType &Environment::GetIDRecursive(const std::string &id) {
-    auto it = id_table_.find(id);
-    if (it != id_table_.end()) {
-        return it->second;
-    }
-    else {
-        assert(outer_ != nullptr);
-        return outer_->GetIDRecursive(id);
-    }
-}
-
-IDType &Environment::GetIDRef(const std::string &id) {
-    /*
-        NOTICE: consider the following situation:
-            var a = 1
-            if ... {
-                a += 1   # mark 1
-            }
-            a += 2   # mark 2
-        mark 1: generate new 'a' in if-body (block)
-        mark 2: get id of 'a' in outer block
-
-        QUESTION: variable use in mark 2 may fail?
-        ANSWER: this situation will not happen (WHY?)
-    */
-    auto it = id_table_.find(id);
-    if (it != id_table_.end()) {
-        return it->second;
-    }
-    else {
-        auto var_id = outer_->GetIDRecursive(id);
-        auto it = id_table_.insert({id, var_id}).first;
-        return it->second;
-    }
-}

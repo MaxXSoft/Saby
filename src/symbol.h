@@ -25,9 +25,6 @@ inline EnvPtr MakeEnvironment(EnvPtr outer) {
 
 class Environment {
 public:
-    // variable name -> SSA id
-    using SymbolID = std::map<std::string, IDType>;
-
     enum class LoadEnvReturn : char {
         Success, FileError, LibConflicted, FuncConflicted
     };
@@ -44,9 +41,6 @@ public:
     bool SaveEnv(const char *path, const LibList &syms);
     LoadEnvReturn LoadEnv(const char *path, const std::string &lib_name);
 
-    // used in IR generating process
-    SymbolID &id_table() { return id_table_; }
-    IDType &GetIDRef(const std::string &id);
     const LibListPtr &loaded_libs() const { return loaded_libs_; }
     const LibListPtr &exported_funcs() const { return exported_funcs_; }
 
@@ -65,11 +59,9 @@ private:
     const EnvPtr &GetEnvOutermost(const EnvPtr &current) const;
     EnvPtr MakeLibEnv();
     EnvPtr GetLibEnv();
-    IDType &GetIDRecursive(const std::string &id);
 
     EnvPtr outer_;
     SymbolHash table_;
-    SymbolID id_table_;
     // library info
     LibHashPtr lib_hash_;
     LibListPtr loaded_libs_, exported_funcs_;
