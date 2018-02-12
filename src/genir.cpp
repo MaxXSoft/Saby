@@ -41,11 +41,9 @@ Operator GetOperator(int operator_id) {
 
 SSAPtr IdentifierAST::GenIR(IRBuilder &irb) {
     if (type_ == -1) {   // variable use
-        // TODO: how to handle external call?
         auto block_id = irb.GetCurrentBlock()->id();
         // get id recursively
-        auto var_id = env()->GetIDRef(id_);
-        auto var_ssa = irb.ReadVariable(var_id, block_id);
+        auto var_ssa = irb.ReadVariable(id_, block_id);
         return var_ssa;
     }
     else {   // function argument list
@@ -58,9 +56,7 @@ SSAPtr VariableAST::GenIR(IRBuilder &irb) {
     auto cur_block = irb.GetCurrentBlock();
     for (const auto &i : defs_) {
         auto value = i.second->GenIR(irb);
-        auto var_ssa = irb.NewVariable(value);
-        // save var_id
-        env()->id_table()[i.first] = var_ssa->id();
+        auto var_ssa = irb.NewVariable(i.first, value);
         cur_block->AddValue(var_ssa);
     }
     return nullptr;   // return nothing
@@ -83,25 +79,18 @@ SSAPtr BinaryExpressionAST::GenIR(IRBuilder &irb) {
     auto cur_block = irb.GetCurrentBlock();
     if (operator_id_ == kAssign) {
         // like 'a = b + 2'
-        auto var_ssa = irb.NewVariable(rhs_->GenIR(irb));
         const auto &lhs_id = static_cast<IdentifierAST *>(lhs_.get())->id();
-        // update variable id
-        env()->GetIDRef(lhs_id) = var_ssa->id();
-        value = var_ssa;
+        value = irb.NewVariable(lhs_id, rhs_->GenIR(irb));
     }
     else if (operator_id_ > kAssign) {
         // like 'a += 1'
         auto op = GetOperator(operator_id_ - kAssign);
         const auto &lhs_id = static_cast<IdentifierAST *>(lhs_.get())->id();
-        // get variable id & old value
-        auto &var_id = env()->GetIDRef(lhs_id);
-        auto old_var = irb.ReadVariable(var_id, cur_block->id());
+        // get old value
+        auto old_var = irb.ReadVariable(lhs_id, cur_block->id());
         // generate quad_ssa & new value
         auto quad = std::make_shared<QuadSSA>(op, old_var, rhs_->GenIR(irb));
-        auto new_var = irb.NewVariable(quad);
-        // update variable id
-        var_id = new_var->id();
-        value = new_var;
+        value = irb.NewVariable(lhs_id, quad);
     }
     else {   // operator_id (>= kAnd && <= kPow && != kNot)
         // like 'a * 3'
@@ -109,7 +98,7 @@ SSAPtr BinaryExpressionAST::GenIR(IRBuilder &irb) {
         auto lhs_ssa = lhs_->GenIR(irb);
         auto rhs_ssa = rhs_->GenIR(irb);
         auto quad = std::make_shared<QuadSSA>(op, lhs_ssa, rhs_ssa);
-        value = irb.NewVariable(quad);
+        value = irb.NewVariable("__tmp", quad);
     }
     // add to block
     cur_block->AddValue(value);
@@ -125,14 +114,14 @@ SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb) {
             // like '(string)1'
             auto op = GetOperator(operator_id_);
             auto quad = std::make_shared<QuadSSA>(op, opr_ssa, nullptr);
-            value = irb.NewVariable(quad);
+            value = irb.NewVariable("__tmp", quad);
             break;
         }
         case kNot: {
             // like '~a'
             auto op = QuadSSA::Operator::Not;
             auto quad = std::make_shared<QuadSSA>(op, opr_ssa, nullptr);
-            value = irb.NewVariable(quad);
+            value = irb.NewVariable("__tmp", quad);
             break;
         }
         case kSub: {
@@ -141,7 +130,7 @@ SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb) {
             // generate '0 - a'
             auto num_value = GetValueByType(operand_type_, 0);
             auto quad = std::make_shared<QuadSSA>(op, num_value, opr_ssa);
-            value = irb.NewVariable(quad);
+            value = irb.NewVariable("__tmp", quad);
             break;
         }
         case kInc: case kDec: {
@@ -150,15 +139,11 @@ SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb) {
             auto op = operator_id_ == kInc ? Operator::Add : Operator::Sub;
             auto num_value = GetValueByType(operand_type_, 1);
             const auto &id = static_cast<IdentifierAST *>(operand_.get())->id();
-            // get variable id
-            auto &var_id = env()->GetIDRef(id);
-            auto old_var = irb.ReadVariable(var_id, cur_block->id());
+            // get old value
+            auto old_var = irb.ReadVariable(id, cur_block->id());
             // generate 'a = a + 1' or 'a = a - 1'
             auto quad = std::make_shared<QuadSSA>(op, old_var, num_value);
-            auto new_var = irb.NewVariable(quad);
-            // update variable id
-            var_id = new_var->id();
-            value = new_var;
+            value = irb.NewVariable(id, quad);
             break;
         }
     }
@@ -182,7 +167,7 @@ SSAPtr CallAST::GenIR(IRBuilder &irb) {
     cur_block->AddValue(call_ssa);
     // get return value
     auto rtn_getter = std::make_shared<RtnGetterSSA>(call_ssa);
-    auto value = irb.NewVariable(rtn_getter);
+    auto value = irb.NewVariable("__rtn", rtn_getter);
     cur_block->AddValue(value);   // TODO: how to handle () => void?
     return value;
 }
@@ -209,16 +194,14 @@ SSAPtr FunctionAST::GenIR(IRBuilder &irb) {
     auto cur_block = irb.NewBlock();
     irb.SealBlock(cur_block);
     for (int i = 0; i < args_.size(); ++i) {
-        auto id_ast = static_cast<IdentifierAST *>(args_[i].get());
+        const auto &id = static_cast<IdentifierAST *>(args_[i].get())->id();
+        // generate argument getter
         auto getter_ssa = std::make_shared<ArgGetterSSA>(i);
-        auto var_ssa = irb.NewVariable(getter_ssa);
-        // save argument var def
-        env()->id_table()[id_ast->id()] = var_ssa->id();
+        auto var_ssa = irb.NewVariable(id, getter_ssa);
         cur_block->AddValue(var_ssa);
     }
     // generate id '@'
-    auto self_ssa = irb.NewVariable(cur_block);
-    env()->id_table()["@"] = self_ssa->id();
+    auto self_ssa = irb.NewVariable("@", cur_block);
     cur_block->AddValue(self_ssa);   // TODO: self-reference loop?
     // generate function body
     irb.set_pred_value(cur_block);
@@ -268,7 +251,7 @@ SSAPtr IfAST::GenIR(IRBuilder &irb) {
     // generate end block & add preds
     auto end_block = irb.NewBlock();
     end_block->AddPred(if_block);
-    end_block->AddPred(else_block ? else_block : cur_block);
+    end_block->AddPred(else_end_block ? else_end_block : cur_block);
     irb.SealBlock(end_block);
     // generate jump statements
     auto jump_cond = std::make_shared<JumpSSA>(if_block, cond_ssa);
@@ -366,11 +349,10 @@ SSAPtr ExternalAST::GenIR(IRBuilder &irb) {
         for (const auto &i : loaded_libs) {
             // create external function ssa
             auto ext_func = std::make_shared<ExternFuncSSA>(i);
-            auto var_ssa = irb.NewVariable(ext_func);
-            // get func name & save var id
+            // get func name & generate var
             // TODO: consider the efficiency of 'substr'
             auto &&func_name = i.substr(i.find('.') + 1);
-            lib_env->id_table()[func_name] = var_ssa->id();
+            auto var_ssa = irb.NewVariable(func_name, ext_func);
             cur_block->AddValue(var_ssa);
         }
         // save library info
@@ -380,11 +362,7 @@ SSAPtr ExternalAST::GenIR(IRBuilder &irb) {
     }
     else {   // type_ == kExport
         const auto &exported_funcs = *lib_env->exported_funcs();
-        for (const auto &i : exported_funcs) {
-            // save function name & id
-            const auto &func_id = env()->GetIDRef(i);
-            irb.exported_funcs().push_back({i, func_id});
-        }
+        irb.set_exported_funcs(exported_funcs);
     }
     return nullptr;
 }
