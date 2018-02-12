@@ -25,7 +25,7 @@ constexpr int kFuncMaxArgNum = 6;
 constexpr TypeValue kFuncTypeBase = 131;
 
 // store the id of SSA
-using IDType = std::size_t;
-constexpr IDType kIDTypeMax = SIZE_MAX;
+using IDType = std::string;
+using BlockIDType = std::size_t;
 
 #endif // SABY_TYPE_H_
