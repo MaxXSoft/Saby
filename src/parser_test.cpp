@@ -28,7 +28,6 @@ int main(int argc, const char *argv[]) {
         if (ast->SemaAnalyze(analyzer) == kTypeError) break;
         ast->GenIR(irb);
     }
-    // irb.SealBlocks();
 
     // print all of the blocks
     for (const auto &i : irb.blocks()) {
