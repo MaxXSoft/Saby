@@ -85,7 +85,20 @@ class PhiSSA : public User {
 public:
     PhiSSA(BlockIDType block_id) : User("phi"), block_id_(block_id) {}
 
-    void AddOperand(SSAPtr opr) { push_back(Use(opr, this)); }
+    void AddOperand(SSAPtr opr) {
+        if (opr.get() != this) {
+            if (opr->name()[0] == 'p') {
+                auto phi_ptr = static_cast<PhiSSA *>(opr.get());
+                for (const auto &use : *phi_ptr) {
+                    push_back(Use(use.value(), this));
+                }
+            }
+            else {
+                push_back(Use(opr, this));
+            }
+        }
+    }
+
     void ReplaceBy(SSAPtr &ssa) {
         auto value = static_cast<Value *>(this);
         for (auto &&use : *value) {

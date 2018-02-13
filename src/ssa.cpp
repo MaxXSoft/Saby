@@ -41,7 +41,7 @@ void ValueSSA::Print() {
     std::cout << name() << '(';
     switch (type_) {
         case ValueType::Number: {
-            std::cout << num_val_;
+            std::cout << std::dec << num_val_;
             break;
         }
         case ValueType::Decimal: {
