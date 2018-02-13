@@ -64,7 +64,7 @@ private:
     // TODO: consider use map<ID, map<ID, Ptr>> to store defs & phis
     std::vector<SSAPtrMap> current_def_, incomplete_phis_;
     std::vector<std::shared_ptr<BlockSSA>> blocks_;
-    std::vector<BlockIDType> sealed_blocks_;
+    std::list<BlockIDType> sealed_blocks_;
     // library info
     LibList imported_libs_, exported_funcs_;
 };
