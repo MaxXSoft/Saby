@@ -1,7 +1,5 @@
 // reference: Simple and Efficient Construction of Static Single Assignment Form
 
-// TODO: rewrite this file
-
 #include "irbuilder.h"
 
 #include <memory>
@@ -124,7 +122,6 @@ void IRBuilder::SealBlock(SSAPtr block) {
     }
 }
 
-// TODO: rewrite
 void IRBuilder::Release() {
     auto ResetList = [](auto &list) {
         for (auto &&it : list) it.reset();
