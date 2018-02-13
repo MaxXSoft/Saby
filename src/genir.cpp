@@ -277,8 +277,10 @@ SSAPtr WhileAST::GenIR(IRBuilder &irb) {
     auto while_entry = irb.NewBlock();
     while_entry->AddPred(cur_block);
     auto cond_ssa = cond_->GenIR(irb);
-    // generate end block
+    // generate & seal end block
     auto while_end = irb.NewBlock();
+    while_end->AddPred(while_entry);
+    irb.SealBlock(while_end);
     // set pred & break/continue info
     irb.set_pred_value(while_entry);
     irb.break_cont_stack().push({while_end, while_entry});
@@ -287,9 +289,9 @@ SSAPtr WhileAST::GenIR(IRBuilder &irb) {
     // restore pred value & 'break_cont_stack'
     irb.break_cont_stack().pop();
     irb.set_pred_value(nullptr);
-    // set the pred of entry & end
+    // set the pred of entry & seal entry block
     while_entry->AddPred(while_body);
-    while_end->AddPred(while_entry);
+    irb.SealBlock(while_entry);
     // generate jump statements
     auto jump_entry = std::make_shared<JumpSSA>(while_entry, nullptr);
     auto jump_body = std::make_shared<JumpSSA>(while_body, cond_ssa);
@@ -300,9 +302,6 @@ SSAPtr WhileAST::GenIR(IRBuilder &irb) {
     while_entry->AddValue(jump_end);
     auto body_block_ptr = static_cast<BlockSSA *>(while_body.get());
     body_block_ptr->AddValue(jump_body);
-    // seal blocks
-    // irb.SealBlock(cur_block);
-    // irb.SealBlock(while_entry);
     // switch current block to 'while_end'
     irb.SwitchCurrentBlock(while_end->id());
     return nullptr;
