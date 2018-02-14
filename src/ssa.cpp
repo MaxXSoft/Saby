@@ -65,10 +65,10 @@ void ExternFuncSSA::Print() {
 }
 
 void AsmSSA::Print() {
-    std::cout << name() << std::endl << '\t';
+    std::cout << name() << std::endl << "\t\t";
     for (const auto &i : text_) {
         if (i == '\n') {
-            puts("\n\t");
+            fputs("\n\t\t", stdout);
         }
         else {
             putchar(i);
