@@ -6,13 +6,13 @@
 #include <list>
 #include <string>
 #include <cstddef>
+#include <cassert>
 
 #if NDEBUG
 #define SABY_INLINE inline
 #else   // SSACast assertion on debug mode
 #define SABY_INLINE
 #include <type_traits>
-#include <cassert>
 #endif
 
 #include "type.h"
@@ -187,14 +187,28 @@ public:
     void Print() override;
 };
 
+class ReturnSSA : public User {
+public:
+    ReturnSSA(SSAPtr value) : User("ret") {
+        if (value) {
+            reserve(1);
+            push_back(value);
+        }
+        else {
+            reserve(0);
+        }
+    }
+
+    void Print() override;
+};
+
 class QuadSSA : public User {
 public:
     enum class Operator : char {
         ConvNum, ConvDec, ConvStr,
         And, Xor, Or, Not, Shl, Shr,
         Add, Sub, Mul, Div, Mod, Pow,
-        Less, LessEqual, Greater, GreaterEqual, Euqal, NotEqual,
-        Return
+        Less, LessEqual, Greater, GreaterEqual, Euqal, NotEqual
     };
 
     QuadSSA(Operator op, SSAPtr opr1, SSAPtr opr2) : User("inst"), op_(op) {
@@ -212,12 +226,13 @@ public:
     void Print() override;
 
 private:
-    Operator op_;   // TODO: rewrite Operator enum
+    Operator op_;
 };
 
 class VariableSSA : public User {
 public:
     VariableSSA(const IDType &id, SSAPtr value) : User("$var"), id_(id) {
+        assert(value);
         reserve(1);
         push_back(value);
     }
@@ -252,12 +267,18 @@ SABY_INLINE T *SSACast(Value *ptr) {
             }
             break;
         }
+        case 'r': {
+            switch (name[1]) {
+                case 't': assert((std::is_same<T, RtnGetterSSA>::value)); break;
+                case 'e': assert((std::is_same<T, ReturnSSA>::value)); break;
+            }
+            break;
+        }
         case 'a': assert((std::is_same<T, AsmSSA>::value)); break;
         case 'p': assert((std::is_same<T, PhiSSA>::value)); break;
         case 'b': assert((std::is_same<T, BlockSSA>::value)); break;
         case 'j': assert((std::is_same<T, JumpSSA>::value)); break;
         case 'c': assert((std::is_same<T, CallSSA>::value)); break;
-        case 'r': assert((std::is_same<T, RtnGetterSSA>::value)); break;
         case 'i': assert((std::is_same<T, QuadSSA>::value)); break;
     }
 #endif
