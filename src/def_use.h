@@ -5,7 +5,7 @@
 
 #include <memory>
 #include <utility>
-#include <list>
+#include <forward_list>
 #include <vector>
 #include <string>
 #include <cstddef>
@@ -24,26 +24,16 @@ public:
     Value(const std::string &name) : name_(name) {}
     virtual ~Value() = default;
 
-    void AddUse(Use *use) { uses_.push_back(use); }
-    // TODO: consider moving the impl to a separate file
-    void RemoveUse(Use *use) {
-        for (auto it = uses_.begin(); it != uses_.end(); ) {
-            if (*it == use) {
-                it = uses_.erase(it);
-            }
-            else {
-                ++it;
-            }
-        }
-    }
+    void AddUse(Use *use) { uses_.push_front(use); }
+    void RemoveUse(Use *use) { uses_.remove(use); }
 
     virtual void Print() = 0;
 
-    const std::list<Use *> &uses() const { return uses_; }
+    const std::forward_list<Use *> &uses() const { return uses_; }
     const std::string &name() const { return name_; }
 
 private:
-    std::list<Use *> uses_;   // doubly-linked list for Use
+    std::forward_list<Use *> uses_;   // singly-linked list for Use
     std::string name_;
 };
 
