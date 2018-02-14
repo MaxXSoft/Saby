@@ -207,6 +207,12 @@ SSAPtr FunctionAST::GenIR(IRBuilder &irb) {
     irb.set_pred_value(cur_block);
     auto body_ssa = body_->GenIR(irb);
     irb.set_pred_value(nullptr);
+    // add 'return' if this is a void function
+    auto func_type = env()->GetType("@");
+    if (GetFuncRetType(func_type) == kVoid) {
+        auto body_end_block = irb.GetCurrentBlock();
+        body_end_block->AddValue(std::make_shared<ReturnSSA>(nullptr));
+    }
     // generate jump statement & add to entry
     auto jump_ssa = std::make_shared<JumpSSA>(body_ssa, nullptr);
     cur_block->AddValue(jump_ssa);
@@ -313,9 +319,8 @@ SSAPtr ControlFlowAST::GenIR(IRBuilder &irb) {
     SSAPtr value = nullptr;
     switch (type_) {
         case kReturn: {
-            auto op = QuadSSA::Operator::Return;
-            auto value_ssa = value_->GenIR(irb);
-            value = std::make_shared<QuadSSA>(op, value_ssa, nullptr);
+            SSAPtr value_ssa = value_ ? value_->GenIR(irb) : nullptr;
+            value = std::make_shared<ReturnSSA>(value_ssa);
             break;
         }
         case kBreak: {
