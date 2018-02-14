@@ -24,6 +24,10 @@ constexpr TypeValue kTypeError = -1;
 constexpr int kFuncMaxArgNum = 6;
 constexpr TypeValue kFuncTypeBase = 131;
 
+inline TypeValue GetFuncRetType(TypeValue func_type) {
+    return (func_type - kFuncTypeBase) % kFuncTypeBase;
+}
+
 // store the id of SSA
 using IDType = std::string;
 using BlockIDType = std::size_t;

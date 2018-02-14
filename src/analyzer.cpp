@@ -22,10 +22,6 @@ TypeValue GetFunctionType(const TypeList &args_type, TypeValue ret_type) {
     return func_type;
 }
 
-inline TypeValue GetFuncRetType(TypeValue func_type) {
-    return (func_type - kFuncTypeBase) % kFuncTypeBase;
-}
-
 bool IsBinaryOperator(int operator_id) {
     switch (operator_id) {
         case kConvNum: case kConvDec: case kConvStr:
