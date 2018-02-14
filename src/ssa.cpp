@@ -137,13 +137,23 @@ void RtnGetterSSA::Print() {
     std::cout << (user->size() - 1) << ')';
 }
 
+void ReturnSSA::Print() {
+    std::cout << name() << '(';
+    if (size()) {
+        PrintValue((*this)[0].value());
+    }
+    else {
+        std::cout << "void";
+    }
+    std::cout << ')';
+}
+
 void QuadSSA::Print() {
     const char *op_str[] = {
         "(num)", "(dec)", "(str)",
         "and", "xor", "or", "not", "shl", "shr",
         "add", "sub", "mul", "div", "mod", "pow",
-        "lt", "le", "gt", "ge", "eq", "neq",
-        "ret"
+        "lt", "le", "gt", "ge", "eq", "neq"
     };
     std::cout << '[' << op_str[static_cast<int>(op_)] << ", ";
     PrintValue((*this)[0].value());
@@ -156,8 +166,6 @@ void QuadSSA::Print() {
 
 void VariableSSA::Print() {
     PrintVarName(id_, this);
-    if ((*this).size()) {
-        std::cout << " = ";
-        PrintValue((*this)[0].value());
-    }
+    std::cout << " = ";
+    PrintValue((*this)[0].value());
 }
