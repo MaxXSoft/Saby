@@ -44,7 +44,7 @@ TypeValue UnaryExpressionAST::SemaAnalyze(Analyzer &ana) {
     auto is_lvalue = operand_->type() == ASTType::Id;
     auto opr_type = operand_->SemaAnalyze(ana);
     auto ret = ana.AnalyzeUnaExpr(operator_id_, opr_type, is_lvalue);
-    set_operand_type(opr_type);
+    operand_type_ = opr_type;
     set_env(ana.env());
     return ret;
 }
@@ -55,6 +55,7 @@ TypeValue CallAST::SemaAnalyze(Analyzer &ana) {
         args_type.push_back(i->SemaAnalyze(ana));
     }
     auto ret = ana.AnalyzeCall(callee_->SemaAnalyze(ana), args_type);
+    ret_type_ = ret;
     set_env(ana.env());
     return ret;
 }
