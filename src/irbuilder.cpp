@@ -92,19 +92,18 @@ SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
     }
     // the phi is unreachable or in the start block
     if (same == nullptr) same = std::make_shared<UndefSSA>();
-    // remember all users except the phi itself
     std::vector<User *> users;
     for (const auto &it : phi->uses()) {
         auto user = it->user();
+        // remember all users except the phi itself
         if (user != phi_ptr) users.push_back(user);
+        // reroute all uses of phi to same
+        it->set_value(same);
     }
-    // reroute all uses of phi to same and remove phi
-    phi_ptr->ReplaceBy(same);
     // try to recursively remove all phi users, 
     // which might have become trivial
     for (const auto &user : users) {
-        // TODO: test
-        if (user->name()[0] == 'p') {
+        if (user->name()[0] == 'p') {   // user is a phi node
             auto phi_user = SSACast<PhiSSA>(user);
             TryRemoveTrivialPhi(phi_user->ref());
         }
