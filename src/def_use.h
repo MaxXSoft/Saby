@@ -4,10 +4,12 @@
 // reference: LLVM version 1.3
 
 #include <memory>
+#include <utility>
 #include <list>
 #include <vector>
 #include <string>
 #include <cstddef>
+#include <cassert>
 
 class Value;
 class User;
@@ -18,18 +20,12 @@ using SSAPtrList = std::vector<SSAPtr>;
 
 class Value {
 public:
-    using ListIter = std::list<Use *>::iterator;
-
     // in order to print or debug the use-def chain
     Value(const std::string &name) : name_(name) {}
     virtual ~Value() = default;
 
-    // TODO: whether to allow duplicate elements?
-    // Thinking: allow, consider the following situation
-    //     var a = 1; var b = a + a
     void AddUse(Use *use) { uses_.push_back(use); }
     // TODO: consider moving the impl to a separate file
-    // TODO: consider if can cause memory error
     void RemoveUse(Use *use) {
         for (auto it = uses_.begin(); it != uses_.end(); ) {
             if (*it == use) {
@@ -43,12 +39,7 @@ public:
 
     virtual void Print() = 0;
 
-    ListIter begin() { return uses_.begin(); }
-    ListIter end() { return uses_.end(); }
-    ListIter erase(ListIter it) { return uses_.erase(it); }
-
-    std::size_t size() const { return uses_.size(); }
-    bool empty() const { return uses_.empty(); }
+    const std::list<Use *> &uses() const { return uses_; }
     const std::string &name() const { return name_; }
 
 private:
@@ -56,14 +47,41 @@ private:
     std::string name_;
 };
 
+class Use {
+public:
+    explicit Use(SSAPtr value, User *user)
+            : copied_(false), value_(value), user_(user) {}
+    // copy constructor
+    Use(const Use &use)
+            : copied_(true), value_(use.value_), user_(use.user_) {
+        if (value_) value_->AddUse(this);
+    }
+    ~Use() { if (copied_ && value_) value_->RemoveUse(this); }
+
+    void set_value(const SSAPtr &value) {
+        assert(copied_);
+        if (value_) value_->RemoveUse(this);
+        value_ = value;
+        if (value_) value_->AddUse(this);
+    }
+
+    SSAPtr value() const { return value_; }
+    User *user() const { return user_; }
+
+private:
+    bool copied_;
+    SSAPtr value_;   // User --Use-> Value
+    User *user_;
+};
+
 class User : public Value {
 public:
     using OpIter = std::vector<Use>::iterator;
 
-    User(const std::string &name) : Value(name) {}
+    explicit User(const std::string &name) : Value(name) {}
 
     void reserve(std::size_t size) { operands_.reserve(size); }
-    void push_back(Use &&use) { operands_.push_back(use); }
+    void push_back(SSAPtr value) { operands_.push_back(Use(value, this)); }
 
     Use &operator[](std::size_t pos) { return operands_[pos]; }
     const Use &operator[](std::size_t pos) const { return operands_[pos]; }
@@ -75,27 +93,6 @@ public:
 
 private:
     std::vector<Use> operands_;
-};
-
-class Use {
-public:
-    Use(SSAPtr value, User *user) : value_(value), user_(user) {
-        if (value_) value_->AddUse(this);
-    }
-    ~Use() { if (value_) value_->RemoveUse(this); }
-
-    void set_value(SSAPtr &value) {
-        if (value_) value_->RemoveUse(this);
-        value_ = value;
-        if (value_) value_->AddUse(this);
-    }
-
-    SSAPtr value() const { return value_; }
-    User *user() const { return user_; }
-
-private:
-    SSAPtr value_;   // User --Use-> Value
-    User *user_;
 };
 
 #endif // SABY_DEF_USE_H_
