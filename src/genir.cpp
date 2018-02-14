@@ -166,9 +166,12 @@ SSAPtr CallAST::GenIR(IRBuilder &irb) {
     }
     cur_block->AddValue(call_ssa);
     // get return value
-    auto rtn_getter = std::make_shared<RtnGetterSSA>(call_ssa);
-    auto value = irb.NewVariable("__rtn", rtn_getter);
-    cur_block->AddValue(value);   // TODO: how to handle () => void?
+    SSAPtr value = nullptr;
+    if (ret_type_ != kVoid) {
+        auto rtn_getter = std::make_shared<RtnGetterSSA>(call_ssa);
+        value = irb.NewVariable("__rtn", rtn_getter);
+        cur_block->AddValue(value);
+    }
     return value;
 }
 
