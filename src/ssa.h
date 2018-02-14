@@ -87,22 +87,21 @@ public:
 
     void AddOperand(SSAPtr opr) {
         if (opr.get() != this) {
-            if (opr->name()[0] == 'p') {
+            if (opr->name()[0] == 'p') {   // if operand is a 'PhiSSA'
                 auto phi_ptr = static_cast<PhiSSA *>(opr.get());
                 for (const auto &use : *phi_ptr) {
-                    push_back(Use(use.value(), this));
+                    push_back(use.value());
                 }
             }
             else {
-                push_back(Use(opr, this));
+                push_back(opr);
             }
         }
     }
 
     void ReplaceBy(SSAPtr &ssa) {
-        auto value = static_cast<Value *>(this);
-        for (auto &&use : *value) {
-            use->set_value(ssa);   // TODO: test
+        for (const auto &use : uses()) {
+            use->set_value(ssa);
         }
     }
 
@@ -123,7 +122,7 @@ public:
     BlockSSA(BlockIDType id)
             : User("block:"), id_(id), is_func_(false) {}
 
-    void AddPred(SSAPtr pred) { push_back(Use(pred, this)); }
+    void AddPred(SSAPtr pred) { push_back(pred); }
     void AddValue(SSAPtr value) { insts_.push_back(value); }
 
     void Print() override;
@@ -146,12 +145,12 @@ public:
     JumpSSA(SSAPtr block, SSAPtr cond) : User("jump->") {
         if (cond) {
             reserve(2);
-            push_back(Use(block, this));
-            push_back(Use(cond, this));
+            push_back(block);
+            push_back(cond);
         }
         else {
             reserve(1);
-            push_back(Use(block, this));
+            push_back(block);
         }
     }
 
@@ -163,7 +162,7 @@ public:
     ArgSetterSSA(int arg_pos, SSAPtr value)
             : User("$arg"), arg_pos_(arg_pos) {
         reserve(1);
-        push_back(Use(value, this));
+        push_back(value);
     }
 
     void Print() override;
@@ -176,19 +175,19 @@ class CallSSA : public User {
 public:
     CallSSA(SSAPtr callee) : User("call->") {
         reserve(kFuncMaxArgNum + 1);
-        push_back(Use(callee, this));
+        push_back(callee);
     }
 
     void Print() override;
 
-    void AddArg(SSAPtr arg_setter) { push_back(Use(arg_setter, this)); }
+    void AddArg(SSAPtr arg_setter) { push_back(arg_setter); }
 };
 
 class RtnGetterSSA : public User {
 public:
     RtnGetterSSA(SSAPtr call) : User("rtn-of") {
         reserve(1);
-        push_back(Use(call, this));
+        push_back(call);
     }
 
     void Print() override;
@@ -207,12 +206,12 @@ public:
     QuadSSA(Operator op, SSAPtr opr1, SSAPtr opr2) : User("inst"), op_(op) {
         if (opr2) {
             reserve(2);
-            push_back(Use(opr1, this));
-            push_back(Use(opr2, this));
+            push_back(opr1);
+            push_back(opr2);
         }
         else {
             reserve(1);
-            push_back(Use(opr1, this));
+            push_back(opr1);
         }
     }
 
@@ -226,7 +225,7 @@ class VariableSSA : public User {
 public:
     VariableSSA(const IDType &id, SSAPtr value) : User("$var"), id_(id) {
         reserve(1);
-        push_back(Use(value, this));
+        push_back(value);
     }
 
     void Print() override;
