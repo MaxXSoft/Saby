@@ -99,12 +99,6 @@ public:
         }
     }
 
-    void ReplaceBy(SSAPtr &ssa) {
-        for (const auto &use : uses()) {
-            use->set_value(ssa);
-        }
-    }
-
     void Print() override;
 
     void set_ref(const std::shared_ptr<PhiSSA> &phi) { ref_ = phi; }
