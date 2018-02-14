@@ -128,8 +128,6 @@ public:
     TypeValue SemaAnalyze(Analyzer &ana) override;
     SSAPtr GenIR(IRBuilder &irb) override;
 
-    void set_operand_type(int operand_type) { operand_type_ = operand_type; }
-
 private:
     int operator_id_, operand_type_;
     ASTPtr operand_;
@@ -147,6 +145,7 @@ public:
 private:
     ASTPtr callee_;
     ASTPtrList args_;
+    int ret_type_;
 };
 
 class BlockAST : public ExpressionAST {
