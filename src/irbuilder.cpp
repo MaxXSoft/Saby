@@ -94,7 +94,7 @@ SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
     if (same == nullptr) same = std::make_shared<UndefSSA>();
     // remember all users except the phi itself
     std::vector<User *> users;
-    for (const auto &it : *phi) {
+    for (const auto &it : phi->uses()) {
         auto user = it->user();
         if (user != phi_ptr) users.push_back(user);
     }
@@ -104,8 +104,10 @@ SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
     // which might have become trivial
     for (const auto &user : users) {
         // TODO: test
-        auto phi_user = SSACast<PhiSSA>(user);
-        if (phi_user) TryRemoveTrivialPhi(phi_user->ref());
+        if (user->name()[0] == 'p') {
+            auto phi_user = SSACast<PhiSSA>(user);
+            TryRemoveTrivialPhi(phi_user->ref());
+        }
     }
     return same;
 }
