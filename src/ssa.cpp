@@ -91,7 +91,9 @@ void PhiSSA::Print() {
 }
 
 void BlockSSA::Print() {
-    std::cout << name() << ' ' << id_ << std::endl << "preds: ";
+    std::cout << name() << ' ' << id_;
+    if (is_func_) std::cout << " (function)";
+    std::cout << std::endl << "preds: ";
     if (!size()) {
         std::cout << "null";
     }
