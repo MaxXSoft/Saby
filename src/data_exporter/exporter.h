@@ -2,13 +2,17 @@
 #define SABY_DATA_EXPORTER_EXPORTER_H_
 
 #include <memory>
+#include <utility>
+#include <ostream>
 #include <string>
 #include <list>
+#include <cstddef>
 
 class DataElementInterface;
 class DataReference;
 class Exporter;
 
+using UIDType = std::size_t;
 using DataElement = std::unique_ptr<DataElementInterface>;
 using DataGroup = std::list<DataElement>;
 using DataRefGroup = std::list<DataReference>;
@@ -25,6 +29,8 @@ public:
     virtual void AddData(const std::string &key, std::nullptr_t) = 0;
     virtual void AddData(const std::string &key, DataGroup &&value) = 0;
     virtual void AddData(const std::string &key, DataRefGroup &&value) = 0;
+
+    virtual UIDType uid() const = 0;
 };
 
 class DataReference {
@@ -32,6 +38,7 @@ public:
     explicit DataReference(DataElement &data) : data_(data) {}
 
     DataElement &data() { return data_; }
+    UIDType uid() const { return data_->uid(); }
 
 private:
     DataElement &data_;
@@ -44,7 +51,8 @@ public:
     virtual DataElement &NewDataElement(const std::string &name) = 0;
     virtual DataGroup &NewDataGroup(const std::string &name) = 0;
     virtual DataRefGroup &NewDataRefGroup(const std::string &name) = 0;
-    virtual void Export(const std::string &path) = 0;
+    virtual void Export(std::ostream &&os) = 0;
+    void Export(std::ostream &os) { Export(std::move(os)); }
 
     virtual void set_version(int major, int minor, int revision) = 0;
 };
