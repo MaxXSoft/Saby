@@ -6,13 +6,12 @@
 #include <ostream>
 #include <string>
 #include <list>
-#include <cstddef>
 
 class DataElementInterface;
 class DataReference;
 class Exporter;
 
-using UIDType = std::size_t;
+using UIDType = unsigned long long;
 using DataElement = std::unique_ptr<DataElementInterface>;
 using DataGroup = std::list<DataElement>;
 using DataRefGroup = std::list<DataReference>;
@@ -27,6 +26,8 @@ public:
     virtual void AddData(const std::string &key, bool value) = 0;
     virtual void AddData(const std::string &key, const std::string &value) = 0;
     virtual void AddData(const std::string &key, std::nullptr_t) = 0;
+    virtual void AddData(const std::string &key, DataElement &&value) = 0;
+    virtual void AddData(const std::string &key, DataReference &&value) = 0;
     virtual void AddData(const std::string &key, DataGroup &&value) = 0;
     virtual void AddData(const std::string &key, DataRefGroup &&value) = 0;
 
