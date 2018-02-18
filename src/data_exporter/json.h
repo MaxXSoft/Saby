@@ -10,12 +10,18 @@ public:
     explicit JSONExporter() {}
     ~JSONExporter() {}
 
-    DataElement &NewDataElement(const std::string &name) { return elements_[name]; }
-    DataGroup &NewDataGroup(const std::string &name) { return groups_[name]; }
-    DataRefGroup &NewDataRefGroup(const std::string &name) { return ref_groups_[name]; }
+    DataElement &NewDataElement(const std::string &name) override {
+        return elements_[name];
+    }
+    DataGroup &NewDataGroup(const std::string &name) override {
+        return groups_[name];
+    }
+    DataRefGroup &NewDataRefGroup(const std::string &name) override {
+        return ref_groups_[name];
+    }
     void Export(std::ostream &&os) override;
 
-    void set_version(int major, int minor, int revision) {
+    void set_version(int major, int minor, int revision) override {
         ver_major_ = major;
         ver_minor_ = minor;
         ver_revision_ = revision;
@@ -30,8 +36,9 @@ private:
 
 class JSONDataElement : public DataElementInterface {
 public:
-    explicit JSONDataElement(UIDType uid) : uid_(uid) {}
-    explicit JSONDataElement() : uid_(reinterpret_cast<UIDType>(this)) {}
+    explicit JSONDataElement(UIDType uid) : uid_(uid), sealed_(false) {}
+    explicit JSONDataElement()
+            : uid_(reinterpret_cast<UIDType>(this)), sealed_(false) {}
     ~JSONDataElement() {}
 
     void AddData(const std::string &key, long long value) override;
@@ -44,14 +51,22 @@ public:
     void AddData(const std::string &key, DataGroup &&value) override;
     void AddData(const std::string &key, DataRefGroup &&value) override;
 
+    void Seal() {
+        if (!sealed_) {
+            data_str_ += "\n}";
+            sealed_ = true;
+        }
+    }
+
     UIDType uid() const override { return uid_; }
-    const std::string &data_str() const { return data_str_ + "\n}"; }
+    const std::string &data_str() const { return data_str_; }
 
 private:
     void InitDataStr();
     void AddKey(const std::string &key);
 
     UIDType uid_;
+    bool sealed_;
     std::string data_str_;
 };
 

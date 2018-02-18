@@ -9,13 +9,13 @@
 
 class DataElementInterface;
 class DataReference;
-class Exporter;
+class ExporterInterface;
 
 using UIDType = unsigned long long;
 using DataElement = std::unique_ptr<DataElementInterface>;
 using DataGroup = std::list<DataElement>;
 using DataRefGroup = std::list<DataReference>;
-using Exporter = std::unique_ptr<Exporter>;
+using Exporter = std::unique_ptr<ExporterInterface>;
 
 class DataElementInterface {
 public:

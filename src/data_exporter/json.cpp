@@ -43,7 +43,7 @@ std::string GetEscapedString(const char *str) {
             temp += esc_char;
         }
         else if (c < 0 || std::iscntrl(c)) {
-            if (uni & 0xff00 == 0) {
+            if ((uni & 0xff00) == 0) {
                 uni <<= 8;
                 uni |= c;
             }
@@ -69,6 +69,7 @@ void JSONExporter::Export(std::ostream &&os) {
     for (const auto &it : elements_) {
         os << ",\n" << kIndent << '"' << it.first << "\": ";
         auto json_element = static_cast<JSONDataElement *>(it.second.get());
+        json_element->Seal();
         for (const auto &c : json_element->data_str()) {
             os << c;
             if (c == '\n') os << kIndent;
@@ -82,6 +83,7 @@ void JSONExporter::Export(std::ostream &&os) {
             if (i != group.begin()) os << ",\n";
             os << kIndent << kIndent;
             auto json_element = static_cast<JSONDataElement *>(i->get());
+            json_element->Seal();
             for (const auto &c : json_element->data_str()) {
                 os << c;
                 if (c == '\n') os << kIndent << kIndent;
@@ -115,14 +117,13 @@ void JSONDataElement::InitDataStr()  {
     data_str_ += kIndent;
     data_str_ += "\"uid\": \"";
     char uid_str[sizeof(UIDType) * 2 + 1] = {0};
-    std::sprintf(uid_str, "%016lx", uid_);
+    std::sprintf(uid_str, "%016llx", uid_);
     data_str_ += uid_str;
     data_str_ += '"';
 }
 
 void JSONDataElement::AddKey(const std::string &key) {
-    data_str_ += ",\n";
-    data_str_ += kIndent + '"' + key + "\": ";
+    data_str_ = data_str_ + ",\n" + kIndent + '"' + key + "\": ";
 }
 
 void JSONDataElement::AddData(const std::string &key, long long value) {
@@ -165,6 +166,7 @@ void JSONDataElement::AddData(const std::string &key, std::nullptr_t) {
 void JSONDataElement::AddData(const std::string &key, DataElement &&value) {
     AddKey(key);
     auto json_element = static_cast<JSONDataElement *>(value.get());
+    json_element->Seal();
     for (const auto &c : json_element->data_str_) {
         data_str_ += c;
         if (c == '\n') data_str_ += kIndent;
@@ -175,8 +177,8 @@ void JSONDataElement::AddData(const std::string &key, DataReference &&value) {
     AddKey(key);
     data_str_ += '"';
     char uid_str[sizeof(UIDType) * 2 + 1] = {0};
-    std::sprintf(uid_str, "%064x", value.uid());
-    data_str_ += uid_str + '"';
+    std::sprintf(uid_str, "%016llx", value.uid());
+    data_str_ = data_str_ + uid_str + '"';
 }
 
 void JSONDataElement::AddData(const std::string &key, DataGroup &&value) {
@@ -187,6 +189,7 @@ void JSONDataElement::AddData(const std::string &key, DataGroup &&value) {
         data_str_ += kIndent;
         data_str_ += kIndent;
         auto json_element = static_cast<JSONDataElement *>(it->get());
+        json_element->Seal();
         for (const auto &c : json_element->data_str_) {
             data_str_ += c;
             if (c == '\n') {
@@ -196,7 +199,7 @@ void JSONDataElement::AddData(const std::string &key, DataGroup &&value) {
         }
     }
     data_str_ += '\n';
-    data_str_ += kIndent + ']';
+    data_str_ = data_str_ + kIndent + ']';
 }
 
 void JSONDataElement::AddData(const std::string &key, DataRefGroup &&value) {
@@ -220,13 +223,13 @@ void JSONDataElement::AddData(const std::string &key, DataRefGroup &&value) {
         }
         data_str_ += '"';
         char uid_str[sizeof(UIDType) * 2 + 1] = {0};
-        std::sprintf(uid_str, "%064x", it.uid());
+        std::sprintf(uid_str, "%016llx", it.uid());
         data_str_ += uid_str;
         data_str_ += '"';
         ++count;
     }
     data_str_ += '\n';
-    data_str_ += kIndent + ']';
+    data_str_ = data_str_ + kIndent + ']';
 }
 
 
