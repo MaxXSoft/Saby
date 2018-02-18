@@ -39,13 +39,18 @@ public:
     void AddData(const std::string &key, bool value) override;
     void AddData(const std::string &key, const std::string &value) override;
     void AddData(const std::string &key, std::nullptr_t) override;
+    void AddData(const std::string &key, DataElement &&value) override;
+    void AddData(const std::string &key, DataReference &&value) override;
     void AddData(const std::string &key, DataGroup &&value) override;
     void AddData(const std::string &key, DataRefGroup &&value) override;
 
     UIDType uid() const override { return uid_; }
-    const std::string &data_str() const { return data_str_; }
+    const std::string &data_str() const { return data_str_ + "\n}"; }
 
 private:
+    void InitDataStr();
+    void AddKey(const std::string &key);
+
     UIDType uid_;
     std::string data_str_;
 };
