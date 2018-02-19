@@ -45,10 +45,17 @@ SSAPtr IRBuilder::ReadVariableRecursive(const IDType &var_id, BlockIDType block_
     auto it = std::find(sealed_blocks_.begin(), sealed_blocks_.end(), block_id);
     if (it == sealed_blocks_.end()) {
         // incomplete CFG
-        auto phi = std::make_shared<PhiSSA>(block_id);
-        value = phi;
-        phi->set_ref(phi);
-        incomplete_phis_[block_id][var_id] = value;
+        auto &current_phi_list = incomplete_phis_[block_id];
+        auto phi_it = current_phi_list.find(var_id);
+        if (phi_it != current_phi_list.end()) {
+            value = phi_it->second;
+        }
+        else {
+            auto phi = std::make_shared<PhiSSA>(block_id);
+            value = phi;
+            phi->set_ref(phi);
+            current_phi_list.insert({var_id, value});
+        }
     }
     else if (blocks_[block_id]->size() == 1) {
         // optimize the common case of one predecessor: no phi needed
@@ -97,8 +104,11 @@ SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
         auto user = it->user();
         // remember all users except the phi itself
         if (user != phi_ptr) users.push_back(user);
-        // reroute all uses of phi to same
-        it->set_value(same);
+    }
+    // reroute all uses of phi to same
+    auto uses = phi->uses();   // copy an use list from phi
+    for (const auto &use : uses) {
+        use->set_value(same);
     }
     // try to recursively remove all phi users, 
     // which might have become trivial
