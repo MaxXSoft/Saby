@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <utility>
 #include <cstdio>
+#include <cctype>
 
 namespace {
 
@@ -35,6 +36,25 @@ void PrintValue(const SSAPtr &value) {
     }
 }
 
+std::string GetEscapedString(const char *str) {
+    std::string temp;
+    do {
+        if (std::iscntrl(*str)) {
+            char hex[3];
+            std::sprintf(hex, "%02x", *str);
+            temp.push_back('\\');
+            temp += hex;
+        }
+        else if (*str == '\\') {
+            temp += "\\\\";
+        }
+        else {
+            temp.push_back(*str);
+        }
+    } while (*(++str));
+    return std::move(temp);
+}
+
 }
 
 void ValueSSA::Print() {
@@ -49,7 +69,7 @@ void ValueSSA::Print() {
             break;
         }
         case ValueType::String: {
-            std::cout << '"' << str_val_ << '"';
+            std::cout << '"' << GetEscapedString(str_val_.c_str()) << '"';
             break;
         }
     }
