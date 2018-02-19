@@ -22,7 +22,17 @@ public:
     virtual ~DataElementInterface() = default;
 
     virtual void AddData(const std::string &key, long long value) = 0;
+    void AddData(const std::string &key, char value) { AddData(key, static_cast<long long>(value)); }
+    void AddData(const std::string &key, int value) { AddData(key, static_cast<long long>(value)); }
+    void AddData(const std::string &key, short value) { AddData(key, static_cast<long long>(value)); }
+    void AddData(const std::string &key, long value) { AddData(key, static_cast<long long>(value)); }
+    virtual void AddData(const std::string &key, unsigned long long value) = 0;
+    void AddData(const std::string &key, unsigned char value) { AddData(key, static_cast<unsigned long long>(value)); }
+    void AddData(const std::string &key, unsigned int value) { AddData(key, static_cast<unsigned long long>(value)); }
+    void AddData(const std::string &key, unsigned short value) { AddData(key, static_cast<unsigned long long>(value)); }
+    void AddData(const std::string &key, unsigned long value) { AddData(key, static_cast<unsigned long long>(value)); }
     virtual void AddData(const std::string &key, double value) = 0;
+    void AddData(const std::string &key, float value) { AddData(key, static_cast<double>(value)); }
     virtual void AddData(const std::string &key, bool value) = 0;
     virtual void AddData(const std::string &key, const std::string &value) = 0;
     virtual void AddData(const std::string &key, std::nullptr_t) = 0;

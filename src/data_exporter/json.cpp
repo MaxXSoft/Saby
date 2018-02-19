@@ -133,6 +133,13 @@ void JSONDataElement::AddData(const std::string &key, long long value) {
     data_str_ += buffer;
 }
 
+void JSONDataElement::AddData(const std::string &key, unsigned long long value) {
+    AddKey(key);
+    char buffer[21] = {0};
+    std::sprintf(buffer, "%llud", value);
+    data_str_ += buffer;
+}
+
 void JSONDataElement::AddData(const std::string &key, double value) {
     AddKey(key);
     if (!std::isfinite(value)) {

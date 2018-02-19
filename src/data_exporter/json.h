@@ -5,35 +5,6 @@
 
 #include <map>
 
-class JSONExporter : public ExporterInterface {
-public:
-    explicit JSONExporter() {}
-    ~JSONExporter() {}
-
-    DataElement &NewDataElement(const std::string &name) override {
-        return elements_[name];
-    }
-    DataGroup &NewDataGroup(const std::string &name) override {
-        return groups_[name];
-    }
-    DataRefGroup &NewDataRefGroup(const std::string &name) override {
-        return ref_groups_[name];
-    }
-    void Export(std::ostream &&os) override;
-
-    void set_version(int major, int minor, int revision) override {
-        ver_major_ = major;
-        ver_minor_ = minor;
-        ver_revision_ = revision;
-    }
-
-private:
-    int ver_major_, ver_minor_, ver_revision_;
-    std::map<std::string, DataElement> elements_;
-    std::map<std::string, DataGroup> groups_;
-    std::map<std::string, DataRefGroup> ref_groups_;
-};
-
 class JSONDataElement : public DataElementInterface {
 public:
     explicit JSONDataElement(UIDType uid) : uid_(uid), sealed_(false) {}
@@ -42,6 +13,7 @@ public:
     ~JSONDataElement() {}
 
     void AddData(const std::string &key, long long value) override;
+    void AddData(const std::string &key, unsigned long long value) override;
     void AddData(const std::string &key, double value) override;
     void AddData(const std::string &key, bool value) override;
     void AddData(const std::string &key, const std::string &value) override;
@@ -68,6 +40,36 @@ private:
     UIDType uid_;
     bool sealed_;
     std::string data_str_;
+};
+
+class JSONExporter : public ExporterInterface {
+public:
+    explicit JSONExporter() {}
+    ~JSONExporter() {}
+
+    DataElement &NewDataElement(const std::string &name) override {
+        elements_[name] = std::make_unique<JSONDataElement>();
+        return elements_[name];
+    }
+    DataGroup &NewDataGroup(const std::string &name) override {
+        return groups_[name];
+    }
+    DataRefGroup &NewDataRefGroup(const std::string &name) override {
+        return ref_groups_[name];
+    }
+    void Export(std::ostream &&os) override;
+
+    void set_version(int major, int minor, int revision) override {
+        ver_major_ = major;
+        ver_minor_ = minor;
+        ver_revision_ = revision;
+    }
+
+private:
+    int ver_major_, ver_minor_, ver_revision_;
+    std::map<std::string, DataElement> elements_;
+    std::map<std::string, DataGroup> groups_;
+    std::map<std::string, DataRefGroup> ref_groups_;
 };
 
 #endif // SABY_DATA_EXPORTER_EXPORTER_H_
