@@ -1,9 +1,10 @@
-// reference: Simple and Efficient Construction of Static Single Assignment Form
+/*
+    reference:
+    Simple and Efficient Construction of Static Single Assignment Form
+*/
 
 #include "irbuilder.h"
 
-#include <memory>
-#include <utility>
 #include <algorithm>
 
 std::shared_ptr<BlockSSA> IRBuilder::NewBlock() {
@@ -61,6 +62,16 @@ SSAPtr IRBuilder::ReadVariableRecursive(const IDType &var_id, BlockIDType block_
         // optimize the common case of one predecessor: no phi needed
         auto pred_0 = (*blocks_[block_id])[0].value();
         value = ReadVariable(var_id, SSACast<BlockSSA>(pred_0)->id());
+        // TODO: re-implement this patch in an elegant way
+        if (value->name()[0] == 'p') {
+            auto phi = SSACast<PhiSSA>(value);
+            // value is a removed trivial phi (has at least 1 opr & no user)
+            // but still stored in IRBuilder
+            if (phi->size() && phi->uses().begin() == phi->uses().end()) {
+                // extract the first operand of this phi
+                value = (*phi)[0].value();
+            }
+        }
     }
     else {
         // break potential cycles with operandless phi
@@ -105,8 +116,10 @@ SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
         // remember all users except the phi itself
         if (user != phi_ptr) users.push_back(user);
     }
+    // TODO: consider optimizing
+    // copy an use list from phi
+    auto uses = phi->uses();
     // reroute all uses of phi to same
-    auto uses = phi->uses();   // copy an use list from phi
     for (const auto &use : uses) {
         use->set_value(same);
     }
