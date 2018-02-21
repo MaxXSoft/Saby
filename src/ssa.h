@@ -245,6 +245,67 @@ private:
     IDType id_;
 };
 
+// SFINAE definitions for function template 'IsSSAType'
+template <typename T> inline bool IsSSAType(Value *ptr) { return false; }
+template <typename T> inline bool IsSSAType(const SSAPtr &ptr) { return IsSSAType<T>(ptr.get()); }
+template <> inline bool IsSSAType<ValueSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == '#' && (name[1] == 'n' || name[1] == 'd' || name[1] == 's');
+}
+template <> inline bool IsSSAType<ArgGetterSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == '#' && name[1] == 'a';
+}
+template <> inline bool IsSSAType<ExternFuncSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == '#' && name[1] == 'e';
+}
+template <> inline bool IsSSAType<UndefSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == '#' && name[1] == 'u';
+}
+template <> inline bool IsSSAType<ArgSetterSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == '$' && name[1] == 'a';
+}
+template <> inline bool IsSSAType<VariableSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == '$' && name[1] == 'v';
+}
+template <> inline bool IsSSAType<RtnGetterSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == 'r' && name[1] == 't';
+}
+template <> inline bool IsSSAType<ReturnSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == 'r' && name[1] == 'e';
+}
+template <> inline bool IsSSAType<AsmSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == 'a';
+}
+template <> inline bool IsSSAType<PhiSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == 'p';
+}
+template <> inline bool IsSSAType<BlockSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == 'b';
+}
+template <> inline bool IsSSAType<JumpSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == 'j';
+}
+template <> inline bool IsSSAType<CallSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == 'c';
+}
+template <> inline bool IsSSAType<QuadSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == 'i';
+}
+// end SFINAE definitions
+
 template <typename T>
 SABY_INLINE T *SSACast(Value *ptr) {
 #if !defined(NDEBUG)   // check if it's a valid cast on debug mode
