@@ -63,7 +63,7 @@ SSAPtr IRBuilder::ReadVariableRecursive(const IDType &var_id, BlockIDType block_
         auto pred_0 = (*blocks_[block_id])[0].value();
         value = ReadVariable(var_id, SSACast<BlockSSA>(pred_0)->id());
         // TODO: re-implement this patch in an elegant way
-        if (value->name()[0] == 'p') {
+        if (IsSSAType<PhiSSA>(value)) {
             auto phi = SSACast<PhiSSA>(value);
             // value is a removed trivial phi (has at least 1 opr & no user)
             // but still stored in IRBuilder
@@ -126,7 +126,7 @@ SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
     // try to recursively remove all phi users, 
     // which might have become trivial
     for (const auto &user : users) {
-        if (user->name()[0] == 'p') {   // user is a phi node
+        if (IsSSAType<PhiSSA>(user)) {   // user is a phi node
             auto phi_user = SSACast<PhiSSA>(user);
             TryRemoveTrivialPhi(phi_user->ref());
         }

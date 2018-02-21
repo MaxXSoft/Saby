@@ -16,23 +16,16 @@ void PrintVarName(const std::string &id, VariableSSA *ptr) {
 }
 
 void PrintValue(const SSAPtr &value) {
-    const auto &name = value->name();
-    switch (name[0]) {
-        case 'b': {
-            auto block_ptr = static_cast<BlockSSA *>(value.get());
-            std::cout << "{block: " << block_ptr->id() << '}';
-            break;
-        }
-        case '$': {
-            if (name[1] == 'v') {
-                auto var_ptr = static_cast<VariableSSA *>(value.get());
-                PrintVarName(var_ptr->id(), var_ptr);
-                break;
-            }
-        }
-        default: {
-            value->Print();
-        }
+    if (IsSSAType<BlockSSA>(value)) {
+        auto block_ptr = SSACast<BlockSSA>(value);
+        std::cout << "{block: " << block_ptr->id() << '}';
+    }
+    else if (IsSSAType<VariableSSA>(value)) {
+        auto var_ptr = SSACast<VariableSSA>(value);
+        PrintVarName(var_ptr->id(), var_ptr);
+    }
+    else {
+        value->Print();
     }
 }
 
