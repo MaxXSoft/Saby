@@ -109,7 +109,11 @@ SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
         same = value;
     }
     // the phi is unreachable or in the start block
-    if (same == nullptr) same = std::make_shared<UndefSSA>();
+    // try to generate a EnvGetterSSA to get variable from outer environment
+    if (same == nullptr) {
+        // TODO
+        // same = std::make_shared<UndefSSA>();
+    }
     std::vector<User *> users;
     for (const auto &it : phi->uses()) {
         auto user = it->user();
