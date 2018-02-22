@@ -12,7 +12,6 @@
 #define SABY_INLINE inline
 #else   // SSACast assertion on debug mode
 #define SABY_INLINE
-#include <type_traits>
 #endif
 
 #include "type.h"
@@ -74,12 +73,12 @@ private:
     std::string text_;
 };
 
-class UndefSSA : public Value {
-public:
-    UndefSSA() : Value("#und") {}
+// class UndefSSA : public Value {
+// public:
+//     UndefSSA() : Value("#und") {}
 
-    void Print() override;
-};
+//     void Print() override;
+// };
 
 class PhiSSA : public User {
 public:
@@ -260,10 +259,10 @@ template <> inline bool IsSSAType<ExternFuncSSA>(Value *ptr) {
     const auto &name = ptr->name();
     return name[0] == '#' && name[1] == 'e';
 }
-template <> inline bool IsSSAType<UndefSSA>(Value *ptr) {
-    const auto &name = ptr->name();
-    return name[0] == '#' && name[1] == 'u';
-}
+// template <> inline bool IsSSAType<UndefSSA>(Value *ptr) {
+//     const auto &name = ptr->name();
+//     return name[0] == '#' && name[1] == 'u';
+// }
 template <> inline bool IsSSAType<ArgSetterSSA>(Value *ptr) {
     const auto &name = ptr->name();
     return name[0] == '$' && name[1] == 'a';
@@ -309,39 +308,7 @@ template <> inline bool IsSSAType<QuadSSA>(Value *ptr) {
 template <typename T>
 SABY_INLINE T *SSACast(Value *ptr) {
 #if !defined(NDEBUG)   // check if it's a valid cast on debug mode
-    const auto &name = ptr->name();
-    switch (name[0]) {
-        case '#': {
-            switch (name[1]) {
-                case 'n': case 'd':
-                case 's': assert((std::is_same<T, ValueSSA>::value)); break;
-                case 'a': assert((std::is_same<T, ArgGetterSSA>::value)); break;
-                case 'e': assert((std::is_same<T, ExternFuncSSA>::value)); break;
-                case 'u': assert((std::is_same<T, UndefSSA>::value)); break;
-            }
-            break;
-        }
-        case '$': {
-            switch (name[1]) {
-                case 'a': assert((std::is_same<T, ArgSetterSSA>::value)); break;
-                case 'v': assert((std::is_same<T, VariableSSA>::value)); break;
-            }
-            break;
-        }
-        case 'r': {
-            switch (name[1]) {
-                case 't': assert((std::is_same<T, RtnGetterSSA>::value)); break;
-                case 'e': assert((std::is_same<T, ReturnSSA>::value)); break;
-            }
-            break;
-        }
-        case 'a': assert((std::is_same<T, AsmSSA>::value)); break;
-        case 'p': assert((std::is_same<T, PhiSSA>::value)); break;
-        case 'b': assert((std::is_same<T, BlockSSA>::value)); break;
-        case 'j': assert((std::is_same<T, JumpSSA>::value)); break;
-        case 'c': assert((std::is_same<T, CallSSA>::value)); break;
-        case 'i': assert((std::is_same<T, QuadSSA>::value)); break;
-    }
+    assert((IsSSAType<T>(ptr)));
 #endif
     return static_cast<T *>(ptr);
 }
