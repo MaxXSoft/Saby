@@ -55,7 +55,11 @@ TypeValue Environment::GetType(const std::string &id, bool recursive) {
     else {
         if (!recursive) return kTypeError;
         if (outer_ != nullptr) {
-            return outer_->GetType(id);
+            auto type = outer_->GetType(id);
+            if (type != kTypeError && is_function()) {
+                global_vars_->insert(id);
+            }
+            return type;
         }
         else {
             return kTypeError;

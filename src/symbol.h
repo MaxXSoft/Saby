@@ -18,6 +18,9 @@ class Environment;
 using EnvPtr = std::shared_ptr<Environment>;
 // library info
 using LibListPtr = std::unique_ptr<LibList>;
+// info of global variables that was used in a function
+using GlobalVarSet = std::set<std::string>;
+using GlobalVarSetPtr = std::unique_ptr<GlobalVarSet>;
 
 inline EnvPtr MakeEnvironment(EnvPtr outer) {
     return std::make_shared<Environment>(outer);
@@ -41,6 +44,10 @@ public:
     bool SaveEnv(const char *path, const LibList &syms);
     LoadEnvReturn LoadEnv(const char *path, const std::string &lib_name);
 
+    void SetAsFunction() { global_vars_ = std::make_unique<GlobalVarSet>(); }
+
+    bool is_function() const { return global_vars_ != nullptr; }
+    const GlobalVarSetPtr &global_vars() const { return global_vars_; }
     const LibListPtr &loaded_libs() const { return loaded_libs_; }
     const LibListPtr &exported_funcs() const { return exported_funcs_; }
 
@@ -62,6 +69,8 @@ private:
 
     EnvPtr outer_;
     SymbolHash table_;
+    // global var info
+    GlobalVarSetPtr global_vars_;
     // library info
     LibHashPtr lib_hash_;
     LibListPtr loaded_libs_, exported_funcs_;
