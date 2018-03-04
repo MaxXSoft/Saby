@@ -203,6 +203,23 @@ SSAPtr FunctionAST::GenIR(IRBuilder &irb) {
         auto var_ssa = irb.NewVariable(id, getter_ssa);
         cur_block->AddValue(var_ssa);
     }
+    // generate environment & refs of global vars
+    std::shared_ptr<EnvSSA> env_ssa = nullptr;
+    if (env()->is_function()) {
+        const auto &global_vars = *env()->global_vars();
+        if (global_vars.size()) {
+            env_ssa = std::make_shared<EnvSSA>();
+            int position = 0;
+            for (const auto &it : global_vars) {
+                // environment gen
+                env_ssa->AddVariable(irb.ReadVariable(it, old_block->id()));
+                // global var refs gen
+                auto getter_ssa = std::make_shared<EnvGetterSSA>(position++);
+                auto var_ssa = irb.NewVariable(it, getter_ssa);
+                cur_block->AddValue(var_ssa);
+            }
+        }
+    }
     // generate id '@'
     auto self_ssa = irb.NewVariable("@", cur_block);
     cur_block->AddValue(self_ssa);   // TODO: self-reference loop?
@@ -219,7 +236,11 @@ SSAPtr FunctionAST::GenIR(IRBuilder &irb) {
     cur_block->set_is_func(true);
     // switch back to old block
     irb.SwitchCurrentBlock(old_block->id());
-    return cur_block;
+    // generate function ref
+    auto func_ref = std::make_shared<FuncRefSSA>(cur_block, env_ssa);
+    auto ref_ssa = irb.NewVariable("__func", func_ref);
+    old_block->AddValue(ref_ssa);
+    return ref_ssa;
 }
 
 SSAPtr AsmAST::GenIR(IRBuilder &irb) {
