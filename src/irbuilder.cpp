@@ -109,7 +109,8 @@ SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
         same = value;
     }
     // the phi is unreachable or in the start block
-    if (same == nullptr) same = std::make_shared<UndefSSA>();
+    // this situation is forbidden
+    assert(same != nullptr);
     std::vector<User *> users;
     for (const auto &it : phi->uses()) {
         auto user = it->user();
