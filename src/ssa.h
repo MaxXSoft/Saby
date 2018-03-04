@@ -49,6 +49,11 @@ private:
     int arg_id_;
 };
 
+// class EnvGetterSSA : public Value {
+// public:
+//     EnvGetterSSA() : Value("#env") {}
+// };
+
 // used to represent definition of external function
 class ExternFuncSSA : public Value {
 public:
@@ -73,12 +78,12 @@ private:
     std::string text_;
 };
 
-// class UndefSSA : public Value {
-// public:
-//     UndefSSA() : Value("#und") {}
+class UndefSSA : public Value {
+public:
+    UndefSSA() : Value("#und") {}
 
-//     void Print() override;
-// };
+    void Print() override;
+};
 
 class PhiSSA : public User {
 public:
@@ -259,10 +264,10 @@ template <> inline bool IsSSAType<ExternFuncSSA>(Value *ptr) {
     const auto &name = ptr->name();
     return name[0] == '#' && name[1] == 'e';
 }
-// template <> inline bool IsSSAType<UndefSSA>(Value *ptr) {
-//     const auto &name = ptr->name();
-//     return name[0] == '#' && name[1] == 'u';
-// }
+template <> inline bool IsSSAType<UndefSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == '#' && name[1] == 'u';
+}
 template <> inline bool IsSSAType<ArgSetterSSA>(Value *ptr) {
     const auto &name = ptr->name();
     return name[0] == '$' && name[1] == 'a';
