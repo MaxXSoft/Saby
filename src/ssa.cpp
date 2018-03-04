@@ -73,6 +73,10 @@ void ArgGetterSSA::Print() {
     std::cout << name() << '(' << arg_id_ << ')';
 }
 
+void EnvGetterSSA::Print() {
+    std::cout << name() << '(' << position_ << ')';
+}
+
 void ExternFuncSSA::Print() {
     std::cout << name() << '(' << func_name_ << ')';
 }
@@ -125,6 +129,20 @@ void BlockSSA::Print() {
     }
 }
 
+void FuncRefSSA::Print() {
+    std::cout << name() << '(';
+    PrintValue((*this)[0].value());
+    std::cout << ", ";
+    auto env = (*this)[1].value();
+    if (env) {
+        PrintValue(env);
+    }
+    else {
+        std::cout << "null";
+    }
+    std::cout << ')';
+}
+
 void JumpSSA::Print() {
     std::cout << name() << "{block: ";
     std::cout << SSACast<BlockSSA>((*this)[0].value())->id();
@@ -138,6 +156,15 @@ void JumpSSA::Print() {
 void ArgSetterSSA::Print() {
     std::cout << name() << '_' << arg_pos_ << " = ";
     PrintValue((*this)[0].value());
+}
+
+void EnvSSA::Print() {
+    std::cout << name() << '<';
+    for (auto it = begin(); it != end(); ++it) {
+        PrintValue(it->value());
+        if (it != end() - 1) std::cout << ", ";
+    }
+    std::cout << '>';
 }
 
 void CallSSA::Print() {

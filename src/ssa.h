@@ -49,10 +49,16 @@ private:
     int arg_id_;
 };
 
-// class EnvGetterSSA : public Value {
-// public:
-//     EnvGetterSSA() : Value("#env") {}
-// };
+// get a global var from outer env
+class EnvGetterSSA : public Value {
+public:
+    EnvGetterSSA(int position) : Value("#env"), position_(position) {}
+
+    void Print() override;
+
+private:
+    int position_;
+};
 
 // used to represent definition of external function
 class ExternFuncSSA : public Value {
@@ -78,6 +84,7 @@ private:
     std::string text_;
 };
 
+// TODO: consider to remove
 class UndefSSA : public Value {
 public:
     UndefSSA() : Value("#und") {}
@@ -137,6 +144,17 @@ private:
     std::list<SSAPtr> insts_;
 };
 
+class FuncRefSSA : public User {
+public:
+    FuncRefSSA(SSAPtr block, SSAPtr env) : User("func") {
+        reserve(2);
+        push_back(block);
+        push_back(env);   // 'env' can be a null ptr
+    }
+
+    void Print() override;
+};
+
 class JumpSSA : public User {
 public:
     // NOTICE: 'block' must be a 'BlockSSA'
@@ -169,6 +187,15 @@ private:
     int arg_pos_;
 };
 
+class EnvSSA : public User {
+public:
+    EnvSSA() : User("env") {}
+    
+    void AddVariable(SSAPtr var) { push_back(var); }
+
+    void Print() override;
+};
+
 class CallSSA : public User {
 public:
     CallSSA(SSAPtr callee) : User("call->") {
@@ -176,9 +203,9 @@ public:
         push_back(callee);
     }
 
-    void Print() override;
-
     void AddArg(SSAPtr arg_setter) { push_back(arg_setter); }
+
+    void Print() override;
 };
 
 class RtnGetterSSA : public User {
@@ -260,13 +287,13 @@ template <> inline bool IsSSAType<ArgGetterSSA>(Value *ptr) {
     const auto &name = ptr->name();
     return name[0] == '#' && name[1] == 'a';
 }
-template <> inline bool IsSSAType<ExternFuncSSA>(Value *ptr) {
+template <> inline bool IsSSAType<EnvGetterSSA>(Value *ptr) {
     const auto &name = ptr->name();
     return name[0] == '#' && name[1] == 'e';
 }
-template <> inline bool IsSSAType<UndefSSA>(Value *ptr) {
+template <> inline bool IsSSAType<ExternFuncSSA>(Value *ptr) {
     const auto &name = ptr->name();
-    return name[0] == '#' && name[1] == 'u';
+    return name[0] == '#' && name[2] == 'x';
 }
 template <> inline bool IsSSAType<ArgSetterSSA>(Value *ptr) {
     const auto &name = ptr->name();
@@ -296,9 +323,17 @@ template <> inline bool IsSSAType<BlockSSA>(Value *ptr) {
     const auto &name = ptr->name();
     return name[0] == 'b';
 }
+template <> inline bool IsSSAType<FuncRefSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == 'f';
+}
 template <> inline bool IsSSAType<JumpSSA>(Value *ptr) {
     const auto &name = ptr->name();
     return name[0] == 'j';
+}
+template <> inline bool IsSSAType<EnvSSA>(Value *ptr) {
+    const auto &name = ptr->name();
+    return name[0] == 'e';
 }
 template <> inline bool IsSSAType<CallSSA>(Value *ptr) {
     const auto &name = ptr->name();
