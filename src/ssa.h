@@ -84,14 +84,6 @@ private:
     std::string text_;
 };
 
-// TODO: consider to remove
-class UndefSSA : public Value {
-public:
-    UndefSSA() : Value("#und") {}
-
-    void Print() override;
-};
-
 class PhiSSA : public User {
 public:
     PhiSSA(BlockIDType block_id) : User("phi"), block_id_(block_id) {}

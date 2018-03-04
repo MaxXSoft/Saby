@@ -94,10 +94,6 @@ void AsmSSA::Print() {
     fflush(stdout);
 }
 
-void UndefSSA::Print() {
-    std::cout << name();
-}
-
 void PhiSSA::Print() {
     std::cout << name() << '(';
     for (auto it = begin(); it != end(); ++it) {
