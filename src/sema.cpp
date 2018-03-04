@@ -74,6 +74,7 @@ TypeValue BlockAST::SemaAnalyze(Analyzer &ana) {
 
 TypeValue FunctionAST::SemaAnalyze(Analyzer &ana) {
     ana.NewEnvironment();
+    ana.env()->SetAsFunction();
 
     TypeList args_type;
     for (const auto &i : args_) {
