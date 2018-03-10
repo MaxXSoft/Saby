@@ -20,13 +20,13 @@ using SSAPtrList = std::vector<SSAPtr>;
 
 class Value {
 public:
-    // in order to print or debug the use-def chain
+    // name: in order to print or debug the use-def chain
     Value(const std::string &name) : name_(name) {}
     virtual ~Value() = default;
 
     void AddUse(Use *use) { uses_.push_front(use); }
     void RemoveUse(Use *use) { uses_.remove(use); }
-
+    void ReplaceBy(const SSAPtr &value);
     virtual void Print() = 0;
 
     const std::forward_list<Use *> &uses() const { return uses_; }
@@ -48,12 +48,7 @@ public:
     }
     ~Use() { if (copied_ && value_) value_->RemoveUse(this); }
 
-    void set_value(const SSAPtr &value) {
-        assert(copied_);
-        if (value_) value_->RemoveUse(this);
-        value_ = value;
-        if (value_) value_->AddUse(this);
-    }
+    void set_value(const SSAPtr &value);
 
     SSAPtr value() const { return value_; }
     User *user() const { return user_; }
