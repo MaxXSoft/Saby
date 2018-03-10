@@ -117,13 +117,8 @@ SSAPtr IRBuilder::TryRemoveTrivialPhi(const SSAPtr &phi) {
         // remember all users except the phi itself
         if (user != phi_ptr) users.push_back(user);
     }
-    // TODO: consider optimizing
-    // copy an use list from phi
-    auto uses = phi->uses();
     // reroute all uses of phi to same
-    for (const auto &use : uses) {
-        use->set_value(same);
-    }
+    phi->ReplaceBy(same);
     // try to recursively remove all phi users, 
     // which might have become trivial
     for (const auto &user : users) {
