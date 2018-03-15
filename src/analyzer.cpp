@@ -168,7 +168,11 @@ TypeValue Analyzer::AnalyzeBinExpr(int op, TypeValue l_type, TypeValue r_type, b
     if (op >= kAssign && !is_lvalue) {
         return PrintError("assignment operator must be applied to lvalue");
     }
-    return l_type;
+    switch (op) {
+        case kLess: case kLesEql: case kGreat:
+        case kGreEql: case kEql: case kNeq: return kNumber;
+        default: return l_type;
+    }
 }
 
 TypeValue Analyzer::AnalyzeUnaExpr(int op, TypeValue type, bool is_lvalue) {
