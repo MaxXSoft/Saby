@@ -115,7 +115,7 @@ public:
     SSAPtr GenIR(IRBuilder &irb) override;
 
 private:
-    int operator_id_;
+    int operator_id_, operand_type_;
     ASTPtr lhs_, rhs_;
 };
 

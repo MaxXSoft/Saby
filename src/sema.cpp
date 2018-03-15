@@ -36,6 +36,7 @@ TypeValue StringAST::SemaAnalyze(Analyzer &ana) {
 TypeValue BinaryExpressionAST::SemaAnalyze(Analyzer &ana) {
     auto is_lvalue = lhs_->type() == ASTType::Id;
     auto ret = ana.AnalyzeBinExpr(operator_id_, lhs_->SemaAnalyze(ana), rhs_->SemaAnalyze(ana), is_lvalue);
+    operand_type_ = ret;
     set_env(ana.env());
     return ret;
 }
@@ -44,7 +45,7 @@ TypeValue UnaryExpressionAST::SemaAnalyze(Analyzer &ana) {
     auto is_lvalue = operand_->type() == ASTType::Id;
     auto opr_type = operand_->SemaAnalyze(ana);
     auto ret = ana.AnalyzeUnaExpr(operator_id_, opr_type, is_lvalue);
-    operand_type_ = opr_type;
+    operand_type_ = ret;
     set_env(ana.env());
     return ret;
 }
