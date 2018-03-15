@@ -52,17 +52,19 @@ std::string GetEscapedString(const char *str) {
 
 void ValueSSA::Print() {
     std::cout << name() << '(';
-    switch (type_) {
-        case ValueType::Number: {
-            std::cout << std::dec << num_val_;
+    switch (name()[1]) {
+        case 'n': {
+            std::cout << std::dec << num_val();
             break;
         }
-        case ValueType::Decimal: {
-            std::cout << dec_val_;
+        case 'd': {
+            std::cout << dec_val();
             break;
         }
-        case ValueType::String: {
-            std::cout << '"' << GetEscapedString(str_val_.c_str()) << '"';
+        case 's': {
+            std::cout << '"';
+            std::cout << GetEscapedString(str_val().c_str());
+            std::cout << '"';
             break;
         }
     }

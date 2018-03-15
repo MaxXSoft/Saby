@@ -20,22 +20,28 @@
 class ValueSSA : public Value {
 public:
     ValueSSA(long long value)
-            : Value("#num"), num_val_(value), type_(ValueType::Number) {}
+            : Value("#num"), value_(value) {}
     ValueSSA(double value)
-            : Value("#dec"), dec_val_(value), type_(ValueType::Decimal) {}
+            : Value("#dec"), value_(value) {}
     ValueSSA(const std::string &value)
-            : Value("#str"), str_val_(value), type_(ValueType::String) {}
+            : Value("#str"), value_(value) {}
 
     void Print() override;
 
+    long long num_val() const { return value_.num_val; }
+    double dec_val() const { return value_.dec_val; }
+    const std::string &str_val() const { return value_.str_val; }
+
 private:
-    enum class ValueType : char {
-        Number, Decimal, String
-    };
-    ValueType type_;
-    long long num_val_;
-    double dec_val_;
-    std::string str_val_;
+    union LiteralValue {
+        LiteralValue(long long value) : num_val(value) {}
+        LiteralValue(double value) : dec_val(value) {}
+        LiteralValue(std::string value) : str_val(value) {}
+        ~LiteralValue() {}
+        long long num_val;
+        double dec_val;
+        std::string str_val;
+    } value_;
 };
 
 // used to represent arguments in the body of a function
@@ -231,7 +237,7 @@ public:
         ConvNum, ConvDec, ConvStr,
         And, Xor, Or, Not, Shl, Shr,
         Add, Sub, Mul, Div, Mod, Pow,
-        Less, LessEqual, Greater, GreaterEqual, Euqal, NotEqual
+        Less, LessEqual, Greater, GreaterEqual, Equal, NotEqual
     };
 
     QuadSSA(Operator op, SSAPtr opr1, SSAPtr opr2) : User("inst"), op_(op) {
@@ -268,7 +274,7 @@ private:
     IDType id_;
 };
 
-// SFINAE definitions for function template 'IsSSAType'
+// definitions for function template 'IsSSAType'
 template <typename T> inline bool IsSSAType(Value *ptr) { return false; }
 template <typename T> inline bool IsSSAType(const SSAPtr &ptr) { return IsSSAType<T>(ptr.get()); }
 template <> inline bool IsSSAType<ValueSSA>(Value *ptr) {
@@ -335,7 +341,7 @@ template <> inline bool IsSSAType<QuadSSA>(Value *ptr) {
     const auto &name = ptr->name();
     return name[0] == 'i';
 }
-// end SFINAE definitions
+// end definitions
 
 template <typename T>
 SABY_INLINE T *SSACast(Value *ptr) {
