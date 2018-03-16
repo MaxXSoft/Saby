@@ -245,7 +245,7 @@ SSAPtr FunctionAST::GenIR(IRBuilder &irb) {
 
 SSAPtr AsmAST::GenIR(IRBuilder &irb) {
     auto asm_ssa = std::make_shared<AsmSSA>(asm_str_);
-    // NOTICE: do not remove the inline-asm during optimization
+    // NOTE: do not remove the inline-asm during optimization
     irb.GetCurrentBlock()->AddValue(asm_ssa);
     return nullptr;
 }

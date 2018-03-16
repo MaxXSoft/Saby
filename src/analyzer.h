@@ -35,7 +35,7 @@ public:
         if (nested_env_->outer() != env_) nested_env_ = nested_env_->outer();
     }
 
-    // NOTICE: absolute path requited!
+    // NOTE: absolute path requited!
     void set_lib_path(const std::string &lib_path) {
         lib_path_ = lib_path;
         if (lib_path_.back() != '/') lib_path_.push_back('/');

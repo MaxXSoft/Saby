@@ -79,7 +79,7 @@ private:
 };
 
 // store inline assembly block
-// NOTICE: nothing can use it although it's a 'Value'
+// NOTE: nothing can use it although it's a 'Value'
 class AsmSSA : public Value {
 public:
     AsmSSA(const std::string &text) : Value("asm:"), text_(text) {}
@@ -155,7 +155,7 @@ public:
 
 class JumpSSA : public User {
 public:
-    // NOTICE: 'block' must be a 'BlockSSA'
+    // NOTE: 'block' must be a 'BlockSSA'
     JumpSSA(SSAPtr block, SSAPtr cond) : User("jump->") {
         if (cond) {
             reserve(2);

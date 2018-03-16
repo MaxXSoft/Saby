@@ -156,7 +156,7 @@ TypeValue Analyzer::AnalyzeBinExpr(int op, TypeValue l_type, TypeValue r_type, b
     if (!IsBinaryOperator(op)) return PrintError("invalid binary operator");
     if (r_type == kVar && op == kAssign) {
         r_type = l_type;   // implicit conversion of uncertain type
-        // NOTICE: it's convenient, but unsafe
+        // NOTE: it's convenient, but unsafe
     }
     else if (l_type != r_type) {
         return PrintError("type mismatch between lhs and rhs");
