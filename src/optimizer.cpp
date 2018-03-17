@@ -10,6 +10,17 @@ namespace {
 const long long kNumberLimit[] = {std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max()};
 const double kFloatLimit[] = {std::numeric_limits<double>::min(), std::numeric_limits<double>::max()};
 
+inline long long GetPopCount(long long num_val) {
+    // TODO: consider using 'popcnt' (Intel SSE 4.2+)
+    num_val = (num_val & 0x5555555555555555) + ((num_val >> 1) & 0x5555555555555555);
+    num_val = (num_val & 0x3333333333333333) + ((num_val >> 2) & 0x3333333333333333);
+    num_val = (num_val & 0x0f0f0f0f0f0f0f0f) + ((num_val >> 4) & 0x0f0f0f0f0f0f0f0f);
+    num_val = (num_val & 0x00ff00ff00ff00ff) + ((num_val >> 8) & 0x00ff00ff00ff00ff);
+    num_val = (num_val & 0x0000ffff0000ffff) + ((num_val >> 16) & 0x0000ffff0000ffff);
+    num_val = (num_val & 0x00000000ffffffff) + ((num_val >> 32) & 0x00000000ffffffff);
+    return num_val;
+}
+
 } // namespace
 
 template <typename T>
@@ -179,9 +190,15 @@ SSAPtr Optimizer::AlgebraSimplify(Operator op, const SSAPtr &lhs, const SSAPtr &
             }
             break;
         }
-        case Operator::Shl: case Operator::Shr: { // v << 0 = v; v >> 0 = v; 0 << v = 0; 0 >> v = 0
-            if (!equal && k_value->num_val() == 0) {
-                return is_lhs_const ? std::make_shared<ValueSSA>(0LL) : value;
+        case Operator::Shl: case Operator::Shr: {
+            // v << 0 = v; v >> 0 = v; 0 << v = 0; 0 >> v = 0; -1 >> v = -1
+            if (!equal) {
+                if (k_value->num_val() == 0) {
+                    return is_lhs_const ? std::make_shared<ValueSSA>(0LL) : value;
+                }
+                if (op == Operator::Shr && is_lhs_const && k_value->num_val() == -1LL) {
+                    return std::make_shared<ValueSSA>(-1LL);
+                }
             }
             break;
         }
@@ -255,7 +272,7 @@ SSAPtr Optimizer::AlgebraSimplify(Operator op, const SSAPtr &lhs, const SSAPtr &
             break;
         }
         case Operator::Pow: {   // v ** 0 = 1; 0 ** v = 0; v ** 1 = v; 1 ** v = 1
-            // NOTICE, TODO: 0 ** 0 may return 1 or 0
+            // NOTE, TODO: 0 ** 0 may return 1 or 0
             if (!equal) {
                 if (is_lhs_const) {   // 0 ** v = 0; 1 ** v = 1
                     if (k_value->dec_val() == 0.) return std::make_shared<ValueSSA>(0.);
@@ -281,11 +298,67 @@ SSAPtr Optimizer::AlgebraSimplify(Operator op, const SSAPtr &lhs, const SSAPtr &
             return OptimizeLogicExpression(1, true);
         }
     }
-    // cannot do optimization
+    // cannot do optimization, return a null pointer
     return nullptr;
 }
 
-SSAPtr StrengthReduct(Operator op, const SSAPtr &lhs, const SSAPtr &rhs, int type) {
+SSAPtr Optimizer::StrengthReduct(Operator op, const SSAPtr &lhs, const SSAPtr &rhs, int type) {
+    // NOTE: this process will not do any optimization about loop
+    //       it can only do some naive optimizations
+    switch (op) {
+        case Operator::Add: {   // v + v = v << 1 (Number type)
+            if (lhs == rhs && type == kNumber) {
+                auto value = std::make_shared<ValueSSA>(2LL);
+                return std::make_shared<QuadSSA>(Operator::Shl, lhs, value);
+            }
+            break;
+        }
+        case Operator::Mul: {   // v * (2 ^ n) = v << n (Number type)
+            if (type == kNumber) {
+                SSAPtr value;
+                long long num_val;
+                if (IsSSAType<ValueSSA>(lhs)) {
+                    num_val = SSACast<ValueSSA>(lhs)->num_val();
+                    value = rhs;
+                }
+                else if (IsSSAType<ValueSSA>(rhs)) {
+                    num_val = SSACast<ValueSSA>(rhs)->num_val();
+                    value = lhs;
+                }
+                else {
+                    return nullptr;
+                }
+                // check if num_val is power of 2 (num_val != 0)
+                if (num_val & (num_val - 1) == 0) {
+                    auto num_ssa = std::make_shared<ValueSSA>(GetPopCount(num_val - 1));
+                    return std::make_shared<QuadSSA>(Operator::Shl, value, num_ssa);
+                }
+            }
+            break;
+        }
+        case Operator::Div: {   // v / (2 ^ n) = v >> n (Number type)
+            if (type == kNumber && IsSSAType<ValueSSA>(rhs)) {
+                auto num_val = SSACast<ValueSSA>(rhs)->num_val();
+                if (num_val & (num_val - 1) == 0) {
+                    auto num_ssa = std::make_shared<ValueSSA>(GetPopCount(num_val - 1));
+                    return std::make_shared<QuadSSA>(Operator::Shr, lhs, num_ssa);
+                }
+            }
+            break;
+        }
+        // NOTE: for ZexVM, we cannot use this kind of optimization
+        //       because it generates multiple instructions,
+        //       compared with single instruction, it slows down the program
+        case Operator::Mod: {
+            // v % (2 ^ n) = v & (2 ^ n - 1)                   (positive num)
+            // v % (2 ^ n) = (v & (2 ^ n - 1)) | ~(2 ^ n - 1)  (negative num)
+            break;
+        }
+        case Operator::Pow: {   // 2 ** v = 1 << v
+            // ignore, same as above
+            break;
+        }
+    }
     return nullptr;
 }
 
