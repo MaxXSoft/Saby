@@ -5,7 +5,7 @@
     TODO: optimizer can do:
       √ constant folding
       √ algebraic simplification
-        strength reduction
+      √ strength reduction
       √ copy propagation & constant propagation
         common subexpression elimination
         remove redundant jump/block
@@ -24,7 +24,7 @@ public:
     Optimizer(IRBuilder &irb) : irb_(irb), enabled_(true) {}
     ~Optimizer() {}
 
-    SSAPtr OptimizeBinExpr(Operator op, const SSAPtr &lhs, const SSAPtr &rhs);
+    SSAPtr OptimizeBinExpr(Operator op, const SSAPtr &lhs, const SSAPtr &rhs, int type);
     SSAPtr OptimizeUnaExpr(Operator op, const SSAPtr &operand);
     SSAPtr OptimizeAssign(const SSAPtr &rhs);
 
@@ -36,6 +36,7 @@ private:
     T CalcValue(Operator op, const T &lhs, const T &rhs);
 
     SSAPtr ConstFold(Operator op, const SSAPtr &lhs, const SSAPtr &rhs);
+    SSAPtr ConstFoldUna(Operator op, const SSAPtr &operand);
     SSAPtr AlgebraSimplify(Operator op, const SSAPtr &lhs, const SSAPtr &rhs, int type);
     SSAPtr StrengthReduct(Operator op, const SSAPtr &lhs, const SSAPtr &rhs, int type);
     SSAPtr CopyProp(const SSAPtr &rhs);

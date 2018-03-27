@@ -21,6 +21,30 @@ inline long long GetPopCount(long long num_val) {
     return num_val;
 }
 
+long long ConvertToNum(double dec_val) {
+    //
+}
+
+long long ConvertToNum(const std::string &str_val) {
+    //
+}
+
+double ConvertToDec(long long num_val) {
+    //
+}
+
+double ConvertToDec(const std::string &str_val) {
+    //
+}
+
+std::string ConvertToStr(long long num_val) {
+    //
+}
+
+std::string ConvertToStr(double dec_val) {
+    //
+}
+
 } // namespace
 
 template <typename T>
@@ -88,6 +112,46 @@ SSAPtr Optimizer::ConstFold(Operator op, const SSAPtr &lhs, const SSAPtr &rhs) {
         }
     }
     return value;
+}
+
+SSAPtr Optimizer::ConstFoldUna(Operator op, const SSAPtr &operand) {
+    // 'op' can be: ConvNum, ConvDec, ConvStr, Not
+    if (!IsSSAType<ValueSSA>(operand)) return nullptr;
+    auto opr_ssa = SSACast<ValueSSA>(operand);
+    switch (op) {
+        case Operator::ConvNum: {
+            if (opr_ssa->name()[0] == 'd') {
+                return std::make_shared<ValueSSA>(ConvertToNum(opr_ssa->dec_val()));
+            }
+            else {   // name()[0] == 's'
+                return std::make_shared<ValueSSA>(ConvertToNum(opr_ssa->str_val()));
+            }
+            break;
+        }
+        case Operator::ConvDec: {
+            if (opr_ssa->name()[0] == 'n') {
+                return std::make_shared<ValueSSA>(ConvertToDec(opr_ssa->num_val()));
+            }
+            else {   // name()[0] == 's'
+                return std::make_shared<ValueSSA>(ConvertToDec(opr_ssa->str_val()));
+            }
+            break;
+        }
+        case Operator::ConvStr: {
+            if (opr_ssa->name()[0] == 'n') {
+                return std::make_shared<ValueSSA>(ConvertToStr(opr_ssa->num_val()));
+            }
+            else {   // name()[0] == 'd'
+                return std::make_shared<ValueSSA>(ConvertToStr(opr_ssa->dec_val()));
+            }
+            break;
+        }
+        case Operator::Not: {
+            return std::make_shared<ValueSSA>(~opr_ssa->num_val());
+            break;
+        }
+    }
+    return nullptr;
 }
 
 // TODO: need to be optimized
@@ -355,7 +419,7 @@ SSAPtr Optimizer::StrengthReduct(Operator op, const SSAPtr &lhs, const SSAPtr &r
             break;
         }
         case Operator::Pow: {   // 2 ** v = 1 << v
-            // ignore, same as above
+            // need to generate Float type value, ignore, same as above
             break;
         }
     }
@@ -382,5 +446,30 @@ SSAPtr Optimizer::CopyProp(const SSAPtr &rhs) {
     else {
         return nullptr;
     }
+}
+
+// public method
+SSAPtr Optimizer::OptimizeBinExpr(Operator op, const SSAPtr &lhs, const SSAPtr &rhs, int type) {
+    if (!enabled_) return nullptr;
+    auto lhs_new = CopyProp(lhs);
+    auto rhs_new = CopyProp(rhs);
+    if (!lhs_new) lhs_new = lhs;
+    if (!rhs_new) rhs_new = rhs;
+    auto cf_result = ConstFold(op, lhs_new, rhs_new);
+    if (cf_result) return cf_result;
+    auto as_result = AlgebraSimplify(op, lhs_new, rhs_new, type);
+    if (as_result) return as_result;
+    return StrengthReduct(op, lhs_new, rhs_new, type);
+}
+
+SSAPtr Optimizer::OptimizeUnaExpr(Operator op, const SSAPtr &operand) {
+    if (!enabled_) return nullptr;
+    auto opr_new = CopyProp(operand);
+    if (!opr_new) opr_new = operand;
+    return ConstFoldUna(op, operand);
+}
+
+SSAPtr Optimizer::OptimizeAssign(const SSAPtr &rhs) {
+    return enabled_ ? CopyProp(rhs) : nullptr;
 }
 
