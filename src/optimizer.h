@@ -24,8 +24,9 @@ public:
     Optimizer(IRBuilder &irb) : irb_(irb), enabled_(true) {}
     ~Optimizer() {}
 
-    SSAPtr OptimizeBinExpr(Operator op, const SSAPtr &lhs, const SSAPtr &rhs, int type);
-    SSAPtr OptimizeUnaExpr(Operator op, const SSAPtr &operand);
+    // NOTE: method may modify 'lhs' or 'rhs' (auto copy propagation)
+    SSAPtr OptimizeBinExpr(Operator op, SSAPtr &lhs, SSAPtr &rhs, int type);
+    SSAPtr OptimizeUnaExpr(Operator op, SSAPtr &operand);
     SSAPtr OptimizeAssign(const SSAPtr &rhs);
 
     void set_enabled(bool enabled) { enabled_ = enabled; }

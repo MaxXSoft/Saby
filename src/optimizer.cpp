@@ -61,7 +61,6 @@ T Optimizer::CalcValue(Operator op, const T &lhs, const T &rhs) {
         case Operator::And: return static_cast<long long>(lhs) & static_cast<long long>(rhs);
         case Operator::Xor: return static_cast<long long>(lhs) ^ static_cast<long long>(rhs);
         case Operator::Or: return static_cast<long long>(lhs) | static_cast<long long>(rhs);
-        case Operator::Not: return static_cast<long long>(lhs) ! static_cast<long long>(rhs);
         case Operator::Shl: return static_cast<long long>(lhs) << static_cast<long long>(rhs);
         case Operator::Shr: return static_cast<long long>(lhs) >> static_cast<long long>(rhs);
         case Operator::Add: return lhs + rhs;
@@ -86,7 +85,7 @@ SSAPtr Optimizer::ConstFold(Operator op, const SSAPtr &lhs, const SSAPtr &rhs) {
     SSAPtr value;
     auto lhs_ssa = SSACast<ValueSSA>(lhs);
     auto rhs_ssa = SSACast<ValueSSA>(rhs);
-    switch (lhs->name()[0]) {
+    switch (lhs->name()[1]) {
         case 'n': {   // #num: Number
             auto lhs_v = lhs_ssa->num_val();
             auto rhs_v = rhs_ssa->num_val();
@@ -115,6 +114,7 @@ SSAPtr Optimizer::ConstFold(Operator op, const SSAPtr &lhs, const SSAPtr &rhs) {
                     value = std::make_shared<ValueSSA>(static_cast<long long>(lhs_v != rhs_v));
                     break;
                 }
+                default:;
             }
             break;
         }
@@ -128,7 +128,7 @@ SSAPtr Optimizer::ConstFoldUna(Operator op, const SSAPtr &operand) {
     auto opr_ssa = SSACast<ValueSSA>(operand);
     switch (op) {
         case Operator::ConvNum: {
-            if (opr_ssa->name()[0] == 'd') {
+            if (opr_ssa->name()[1] == 'd') {
                 return std::make_shared<ValueSSA>(ConvertToNum(opr_ssa->dec_val()));
             }
             else {   // name()[0] == 's'
@@ -137,7 +137,7 @@ SSAPtr Optimizer::ConstFoldUna(Operator op, const SSAPtr &operand) {
             break;
         }
         case Operator::ConvDec: {
-            if (opr_ssa->name()[0] == 'n') {
+            if (opr_ssa->name()[1] == 'n') {
                 return std::make_shared<ValueSSA>(ConvertToDec(opr_ssa->num_val()));
             }
             else {   // name()[0] == 's'
@@ -146,7 +146,7 @@ SSAPtr Optimizer::ConstFoldUna(Operator op, const SSAPtr &operand) {
             break;
         }
         case Operator::ConvStr: {
-            if (opr_ssa->name()[0] == 'n') {
+            if (opr_ssa->name()[1] == 'n') {
                 return std::make_shared<ValueSSA>(ConvertToStr(opr_ssa->num_val()));
             }
             else {   // name()[0] == 'd'
@@ -158,6 +158,7 @@ SSAPtr Optimizer::ConstFoldUna(Operator op, const SSAPtr &operand) {
             return std::make_shared<ValueSSA>(~opr_ssa->num_val());
             break;
         }
+        default:;
     }
     return nullptr;
 }
@@ -369,6 +370,7 @@ SSAPtr Optimizer::AlgebraSimplify(Operator op, const SSAPtr &lhs, const SSAPtr &
         case Operator::GreaterEqual: {   // v >= v = 1; v >= V_MIN = 1; V_MAX >= v = 1
             return OptimizeLogicExpression(1, true);
         }
+        default:;
     }
     // cannot do optimization, return a null pointer
     return nullptr;
@@ -401,7 +403,7 @@ SSAPtr Optimizer::StrengthReduct(Operator op, const SSAPtr &lhs, const SSAPtr &r
                     return nullptr;
                 }
                 // check if num_val is power of 2 (num_val != 0)
-                if (num_val & (num_val - 1) == 0) {
+                if ((num_val & (num_val - 1)) == 0) {
                     auto num_ssa = std::make_shared<ValueSSA>(GetPopCount(num_val - 1));
                     return std::make_shared<QuadSSA>(Operator::Shl, value, num_ssa);
                 }
@@ -411,7 +413,7 @@ SSAPtr Optimizer::StrengthReduct(Operator op, const SSAPtr &lhs, const SSAPtr &r
         case Operator::Div: {   // v / (2 ^ n) = v >> n (Number type)
             if (type == kNumber && IsSSAType<ValueSSA>(rhs)) {
                 auto num_val = SSACast<ValueSSA>(rhs)->num_val();
-                if (num_val & (num_val - 1) == 0) {
+                if ((num_val & (num_val - 1)) == 0) {
                     auto num_ssa = std::make_shared<ValueSSA>(GetPopCount(num_val - 1));
                     return std::make_shared<QuadSSA>(Operator::Shr, lhs, num_ssa);
                 }
@@ -430,6 +432,7 @@ SSAPtr Optimizer::StrengthReduct(Operator op, const SSAPtr &lhs, const SSAPtr &r
             // need to generate Float type value, ignore, same as above
             break;
         }
+        default:;
     }
     return nullptr;
 }
@@ -458,23 +461,29 @@ SSAPtr Optimizer::CopyProp(const SSAPtr &rhs) {
 }
 
 // public method
-SSAPtr Optimizer::OptimizeBinExpr(Operator op, const SSAPtr &lhs, const SSAPtr &rhs, int type) {
+SSAPtr Optimizer::OptimizeBinExpr(Operator op, SSAPtr &lhs, SSAPtr &rhs, int type) {
     if (!enabled_) return nullptr;
+    // auto copy propagation
     auto lhs_new = CopyProp(lhs);
     auto rhs_new = CopyProp(rhs);
-    if (!lhs_new) lhs_new = lhs;
-    if (!rhs_new) rhs_new = rhs;
-    auto cf_result = ConstFold(op, lhs_new, rhs_new);
+    if (lhs_new) lhs = lhs_new;
+    if (rhs_new) rhs = rhs_new;
+    // constant folding
+    auto cf_result = ConstFold(op, lhs, rhs);
     if (cf_result) return cf_result;
-    auto as_result = AlgebraSimplify(op, lhs_new, rhs_new, type);
+    // algebraic simplification
+    auto as_result = AlgebraSimplify(op, lhs, rhs, type);
     if (as_result) return as_result;
-    return StrengthReduct(op, lhs_new, rhs_new, type);
+    // strength reduction
+    return StrengthReduct(op, lhs, rhs, type);
 }
 
-SSAPtr Optimizer::OptimizeUnaExpr(Operator op, const SSAPtr &operand) {
+SSAPtr Optimizer::OptimizeUnaExpr(Operator op, SSAPtr &operand) {
     if (!enabled_) return nullptr;
+    // auto copy propagation
     auto opr_new = CopyProp(operand);
-    if (!opr_new) opr_new = operand;
+    if (opr_new) operand = opr_new;
+    // constant folding
     return ConstFoldUna(op, operand);
 }
 
