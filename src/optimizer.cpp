@@ -1,7 +1,9 @@
 #include "optimizer.h"
 
-#include <cmath>
 #include <limits>
+#include <sstream>
+#include <cmath>
+#include <cstdlib>
 
 #include "lexer.h"
 
@@ -21,28 +23,34 @@ inline long long GetPopCount(long long num_val) {
     return num_val;
 }
 
-long long ConvertToNum(double dec_val) {
-    //
+inline long long ConvertToNum(double dec_val) {
+    return static_cast<long long>(dec_val);
 }
 
 long long ConvertToNum(const std::string &str_val) {
-    //
+    // we do not care whether the conversion is valid
+    return std::strtoll(str_val.c_str(), nullptr, 10);
 }
 
-double ConvertToDec(long long num_val) {
-    //
+inline double ConvertToDec(long long num_val) {
+    return static_cast<double>(num_val);
 }
 
 double ConvertToDec(const std::string &str_val) {
-    //
+    // we do not care whether the conversion is valid
+    return std::strtod(str_val.c_str(), nullptr);
 }
 
 std::string ConvertToStr(long long num_val) {
-    //
+    std::stringstream ss;
+    ss << num_val;
+    return ss.str();
 }
 
 std::string ConvertToStr(double dec_val) {
-    //
+    std::stringstream ss;
+    ss << dec_val;
+    return ss.str();
 }
 
 } // namespace
@@ -432,11 +440,12 @@ SSAPtr Optimizer::CopyProp(const SSAPtr &rhs) {
         auto var = SSACast<VariableSSA>(rhs);
         const auto &value = (*var)[0].value();
         if (IsSSAType<VariableSSA>(value)) {
-            const auto &ret = CopyProp(value);
+            auto ret = CopyProp(value);
             return ret ? ret : value;
         }
         else if (IsSSAType<ValueSSA>(value) || IsSSAType<ArgGetterSSA>(value)
                 || IsSSAType<ExternFuncSSA>(value) || IsSSAType<BlockSSA>(value)) {
+            // value that can be propagated
             return value;
         }
         else {
