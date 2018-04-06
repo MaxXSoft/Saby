@@ -5,6 +5,7 @@
 #include "parser.h"
 #include "analyzer.h"
 #include "irbuilder.h"
+#include "optimizer.h"
 
 int main(int argc, const char *argv[]) {
     std::string lib_path(argv[0]), sym_path(argv[1]);
@@ -18,6 +19,7 @@ int main(int argc, const char *argv[]) {
     Parser parser(lexer);
     Analyzer analyzer(lexer);
     IRBuilder irb;
+    Optimizer opt(irb);
 
     analyzer.set_lib_path(lib_path);
     analyzer.set_sym_path(sym_path);
@@ -26,7 +28,7 @@ int main(int argc, const char *argv[]) {
     irb.SealBlock(entry);
     while (auto ast = parser.ParseNext()) {
         if (ast->SemaAnalyze(analyzer) == kTypeError) break;
-        ast->GenIR(irb);
+        ast->GenIR(irb, opt);
     }
 
     // print all of the blocks
