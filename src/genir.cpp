@@ -39,7 +39,7 @@ Operator GetOperator(int operator_id) {
 
 // TODO: check for unused value
 
-SSAPtr IdentifierAST::GenIR(IRBuilder &irb) {
+SSAPtr IdentifierAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     if (type_ == -1) {   // variable use
         auto block_id = irb.GetCurrentBlock()->id();
         // get id recursively
@@ -52,35 +52,37 @@ SSAPtr IdentifierAST::GenIR(IRBuilder &irb) {
     }
 }
 
-SSAPtr VariableAST::GenIR(IRBuilder &irb) {
+SSAPtr VariableAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto cur_block = irb.GetCurrentBlock();
     for (const auto &i : defs_) {
-        auto value = i.second->GenIR(irb);
+        auto value = i.second->GenIR(irb, opt);
         auto var_ssa = irb.NewVariable(i.first, value);
         cur_block->AddValue(var_ssa);
     }
     return nullptr;   // return nothing
 }
 
-SSAPtr NumberAST::GenIR(IRBuilder &irb) {
+SSAPtr NumberAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     return std::make_shared<ValueSSA>(value_);
 }
 
-SSAPtr DecimalAST::GenIR(IRBuilder &irb) {
+SSAPtr DecimalAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     return std::make_shared<ValueSSA>(value_);
 }
 
-SSAPtr StringAST::GenIR(IRBuilder &irb) {
+SSAPtr StringAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     return std::make_shared<ValueSSA>(str_);
 }
 
-SSAPtr BinaryExpressionAST::GenIR(IRBuilder &irb) {
+SSAPtr BinaryExpressionAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     SSAPtr value;
     auto cur_block = irb.GetCurrentBlock();
     if (operator_id_ == kAssign) {
         // like 'a = b + 2'
         const auto &lhs_id = static_cast<IdentifierAST *>(lhs_.get())->id();
-        value = irb.NewVariable(lhs_id, rhs_->GenIR(irb));
+        auto rhs_ssa = rhs_->GenIR(irb, opt);
+        auto opt_ssa = opt.OptimizeAssign(rhs_ssa);
+        value = irb.NewVariable(lhs_id, opt_ssa ? opt_ssa : rhs_ssa);
     }
     else if (operator_id_ > kAssign) {
         // like 'a += 1'
@@ -89,14 +91,14 @@ SSAPtr BinaryExpressionAST::GenIR(IRBuilder &irb) {
         // get old value
         auto old_var = irb.ReadVariable(lhs_id, cur_block->id());
         // generate quad_ssa & new value
-        auto quad = std::make_shared<QuadSSA>(op, old_var, rhs_->GenIR(irb));
+        auto quad = std::make_shared<QuadSSA>(op, old_var, rhs_->GenIR(irb, opt));
         value = irb.NewVariable(lhs_id, quad);
     }
     else {   // operator_id (>= kAnd && <= kPow && != kNot)
         // like 'a * 3'
         auto op = GetOperator(operator_id_);
-        auto lhs_ssa = lhs_->GenIR(irb);
-        auto rhs_ssa = rhs_->GenIR(irb);
+        auto lhs_ssa = lhs_->GenIR(irb, opt);
+        auto rhs_ssa = rhs_->GenIR(irb, opt);
         auto quad = std::make_shared<QuadSSA>(op, lhs_ssa, rhs_ssa);
         value = irb.NewVariable("__tmp", quad);
     }
@@ -105,10 +107,10 @@ SSAPtr BinaryExpressionAST::GenIR(IRBuilder &irb) {
     return value;
 }
 
-SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb) {
+SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     SSAPtr value;
     auto cur_block = irb.GetCurrentBlock();
-    auto opr_ssa = operand_->GenIR(irb);
+    auto opr_ssa = operand_->GenIR(irb, opt);
     switch (operator_id_) {
         case kConvNum: case kConvDec: case kConvStr: {
             // like '(string)1'
@@ -152,14 +154,14 @@ SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb) {
     return value;
 }
 
-SSAPtr CallAST::GenIR(IRBuilder &irb) {
+SSAPtr CallAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto cur_block = irb.GetCurrentBlock();
     // get callee
-    auto callee_ssa = callee_->GenIR(irb);
+    auto callee_ssa = callee_->GenIR(irb, opt);
     auto call_ssa = std::make_shared<CallSSA>(callee_ssa);
     // add arguments to block and call_ssa
     for (int i = 0; i < args_.size(); ++i) {
-        auto arg_ssa = args_[i]->GenIR(irb);
+        auto arg_ssa = args_[i]->GenIR(irb, opt);
         auto setter = std::make_shared<ArgSetterSSA>(i, arg_ssa);
         cur_block->AddValue(setter);
         call_ssa->AddArg(setter);
@@ -175,7 +177,7 @@ SSAPtr CallAST::GenIR(IRBuilder &irb) {
     return value;
 }
 
-SSAPtr BlockAST::GenIR(IRBuilder &irb) {
+SSAPtr BlockAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto cur_block = irb.NewBlock();
     // handle pred
     const auto &pred = irb.pred_value();
@@ -186,12 +188,12 @@ SSAPtr BlockAST::GenIR(IRBuilder &irb) {
     }
     // generate body
     for (const auto &i : expr_list_) {
-        i->GenIR(irb);
+        i->GenIR(irb, opt);
     }
     return cur_block;
 }
 
-SSAPtr FunctionAST::GenIR(IRBuilder &irb) {
+SSAPtr FunctionAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto old_block = irb.GetCurrentBlock();
     // generate function entry
     auto cur_block = irb.NewBlock();
@@ -225,7 +227,7 @@ SSAPtr FunctionAST::GenIR(IRBuilder &irb) {
     cur_block->AddValue(self_ssa);   // TODO: self-reference loop?
     // generate function body
     irb.set_pred_value(cur_block);
-    auto body_ssa = body_->GenIR(irb);
+    auto body_ssa = body_->GenIR(irb, opt);
     irb.set_pred_value(nullptr);
     // add 'return' in the end of function anyway
     auto body_end_block = irb.GetCurrentBlock();
@@ -243,21 +245,21 @@ SSAPtr FunctionAST::GenIR(IRBuilder &irb) {
     return ref_ssa;
 }
 
-SSAPtr AsmAST::GenIR(IRBuilder &irb) {
+SSAPtr AsmAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto asm_ssa = std::make_shared<AsmSSA>(asm_str_);
     // NOTE: do not remove the inline-asm during optimization
     irb.GetCurrentBlock()->AddValue(asm_ssa);
     return nullptr;
 }
 
-SSAPtr IfAST::GenIR(IRBuilder &irb) {
+SSAPtr IfAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto cur_block = irb.GetCurrentBlock();
     // generate condition expression
-    auto cond_ssa = cond_->GenIR(irb);
+    auto cond_ssa = cond_->GenIR(irb, opt);
     // set pred
     irb.set_pred_value(cur_block);
     // generate if-else body
-    SSAPtr if_block = then_->GenIR(irb);
+    SSAPtr if_block = then_->GenIR(irb, opt);
     SSAPtr else_block = nullptr, else_end_block = nullptr;
     if (else_then_) {
         // handle 'else-if' structure separately
@@ -266,10 +268,10 @@ SSAPtr IfAST::GenIR(IRBuilder &irb) {
             new_block->AddPred(cur_block);
             else_block = new_block;
             irb.SealBlock(else_block);
-            else_end_block = else_then_->GenIR(irb);
+            else_end_block = else_then_->GenIR(irb, opt);
         }
         else {   // else_then_->type() == ASTType::Block
-            else_block = else_then_->GenIR(irb);
+            else_block = else_then_->GenIR(irb, opt);
             else_end_block = else_block;
         }
     }
@@ -298,12 +300,12 @@ SSAPtr IfAST::GenIR(IRBuilder &irb) {
     return end_block;
 }
 
-SSAPtr WhileAST::GenIR(IRBuilder &irb) {
+SSAPtr WhileAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto cur_block = irb.GetCurrentBlock();
     // generate entry & condition expression
     auto while_entry = irb.NewBlock();
     while_entry->AddPred(cur_block);
-    auto cond_ssa = cond_->GenIR(irb);
+    auto cond_ssa = cond_->GenIR(irb, opt);
     // generate & seal end block
     auto while_end = irb.NewBlock();
     while_end->AddPred(while_entry);
@@ -312,7 +314,7 @@ SSAPtr WhileAST::GenIR(IRBuilder &irb) {
     irb.set_pred_value(while_entry);
     irb.break_cont_stack().push({while_end, while_entry});
     // generate while-body and get the end of body
-    SSAPtr while_body = body_->GenIR(irb);
+    SSAPtr while_body = body_->GenIR(irb, opt);
     SSAPtr while_body_end = irb.GetCurrentBlock();
     // restore pred value & 'break_cont_stack'
     irb.break_cont_stack().pop();
@@ -335,12 +337,12 @@ SSAPtr WhileAST::GenIR(IRBuilder &irb) {
     return nullptr;
 }
 
-SSAPtr ControlFlowAST::GenIR(IRBuilder &irb) {
+SSAPtr ControlFlowAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto cur_block = irb.GetCurrentBlock();
     SSAPtr value = nullptr;
     switch (type_) {
         case kReturn: {
-            SSAPtr value_ssa = value_ ? value_->GenIR(irb) : nullptr;
+            SSAPtr value_ssa = value_ ? value_->GenIR(irb, opt) : nullptr;
             value = std::make_shared<ReturnSSA>(value_ssa);
             break;
         }
@@ -367,7 +369,7 @@ SSAPtr ControlFlowAST::GenIR(IRBuilder &irb) {
     return nullptr;
 }
 
-SSAPtr ExternalAST::GenIR(IRBuilder &irb) {
+SSAPtr ExternalAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto lib_env = env()->outermost();
     if (type_ == kImport) {
         auto cur_block = irb.GetCurrentBlock();
