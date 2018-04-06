@@ -56,7 +56,8 @@ SSAPtr VariableAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto cur_block = irb.GetCurrentBlock();
     for (const auto &i : defs_) {
         auto value = i.second->GenIR(irb, opt);
-        auto var_ssa = irb.NewVariable(i.first, value);
+        auto opt_ssa = opt.OptimizeAssign(value);
+        auto var_ssa = irb.NewVariable(i.first, opt_ssa ? opt_ssa : value);
         cur_block->AddValue(var_ssa);
     }
     return nullptr;   // return nothing
@@ -91,7 +92,9 @@ SSAPtr BinaryExpressionAST::GenIR(IRBuilder &irb, Optimizer &opt) {
         // get old value
         auto old_var = irb.ReadVariable(lhs_id, cur_block->id());
         // generate quad_ssa & new value
-        auto quad = std::make_shared<QuadSSA>(op, old_var, rhs_->GenIR(irb, opt));
+        auto rhs_ssa = rhs_->GenIR(irb, opt);
+        auto quad = opt.OptimizeBinExpr(op, old_var, rhs_ssa, operand_type_);
+        if (!quad) quad = std::make_shared<QuadSSA>(op, old_var, rhs_ssa);
         value = irb.NewVariable(lhs_id, quad);
     }
     else {   // operator_id (>= kAnd && <= kPow && != kNot)
@@ -99,7 +102,8 @@ SSAPtr BinaryExpressionAST::GenIR(IRBuilder &irb, Optimizer &opt) {
         auto op = GetOperator(operator_id_);
         auto lhs_ssa = lhs_->GenIR(irb, opt);
         auto rhs_ssa = rhs_->GenIR(irb, opt);
-        auto quad = std::make_shared<QuadSSA>(op, lhs_ssa, rhs_ssa);
+        auto quad = opt.OptimizeBinExpr(op, lhs_ssa, rhs_ssa, operand_type_);
+        if (!quad) quad = std::make_shared<QuadSSA>(op, lhs_ssa, rhs_ssa);
         value = irb.NewVariable("__tmp", quad);
     }
     // add to block
@@ -115,14 +119,16 @@ SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb, Optimizer &opt) {
         case kConvNum: case kConvDec: case kConvStr: {
             // like '(string)1'
             auto op = GetOperator(operator_id_);
-            auto quad = std::make_shared<QuadSSA>(op, opr_ssa, nullptr);
+            auto quad = opt.OptimizeUnaExpr(op, opr_ssa);
+            if (!quad) quad = std::make_shared<QuadSSA>(op, opr_ssa, nullptr);
             value = irb.NewVariable("__tmp", quad);
             break;
         }
         case kNot: {
             // like '~a'
             auto op = QuadSSA::Operator::Not;
-            auto quad = std::make_shared<QuadSSA>(op, opr_ssa, nullptr);
+            auto quad = opt.OptimizeUnaExpr(op, opr_ssa);
+            if (!quad) quad = std::make_shared<QuadSSA>(op, opr_ssa, nullptr);
             value = irb.NewVariable("__tmp", quad);
             break;
         }
@@ -131,7 +137,8 @@ SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb, Optimizer &opt) {
             auto op = QuadSSA::Operator::Sub;
             // generate '0 - a'
             auto num_value = GetValueByType(operand_type_, 0);
-            auto quad = std::make_shared<QuadSSA>(op, num_value, opr_ssa);
+            auto quad = opt.OptimizeBinExpr(op, num_value, opr_ssa, operand_type_);
+            if (!quad) quad = std::make_shared<QuadSSA>(op, num_value, opr_ssa);
             value = irb.NewVariable("__tmp", quad);
             break;
         }
@@ -144,7 +151,8 @@ SSAPtr UnaryExpressionAST::GenIR(IRBuilder &irb, Optimizer &opt) {
             // get old value
             auto old_var = irb.ReadVariable(id, cur_block->id());
             // generate 'a = a + 1' or 'a = a - 1'
-            auto quad = std::make_shared<QuadSSA>(op, old_var, num_value);
+            auto quad = opt.OptimizeBinExpr(op, old_var, num_value, operand_type_);
+            if (!quad) quad = std::make_shared<QuadSSA>(op, old_var, num_value);
             value = irb.NewVariable(id, quad);
             break;
         }
@@ -158,7 +166,8 @@ SSAPtr CallAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto cur_block = irb.GetCurrentBlock();
     // get callee
     auto callee_ssa = callee_->GenIR(irb, opt);
-    auto call_ssa = std::make_shared<CallSSA>(callee_ssa);
+    auto opt_ssa = opt.OptimizeAssign(callee_ssa);
+    auto call_ssa = std::make_shared<CallSSA>(opt_ssa ? opt_ssa : callee_ssa);
     // add arguments to block and call_ssa
     for (int i = 0; i < args_.size(); ++i) {
         auto arg_ssa = args_[i]->GenIR(irb, opt);
