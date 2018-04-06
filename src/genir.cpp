@@ -56,8 +56,8 @@ SSAPtr VariableAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto cur_block = irb.GetCurrentBlock();
     for (const auto &i : defs_) {
         auto value = i.second->GenIR(irb, opt);
-        auto opt_ssa = opt.OptimizeAssign(value);
-        auto var_ssa = irb.NewVariable(i.first, opt_ssa ? opt_ssa : value);
+        opt.OptimizeAssign(value);
+        auto var_ssa = irb.NewVariable(i.first, value);
         cur_block->AddValue(var_ssa);
     }
     return nullptr;   // return nothing
@@ -82,8 +82,8 @@ SSAPtr BinaryExpressionAST::GenIR(IRBuilder &irb, Optimizer &opt) {
         // like 'a = b + 2'
         const auto &lhs_id = static_cast<IdentifierAST *>(lhs_.get())->id();
         auto rhs_ssa = rhs_->GenIR(irb, opt);
-        auto opt_ssa = opt.OptimizeAssign(rhs_ssa);
-        value = irb.NewVariable(lhs_id, opt_ssa ? opt_ssa : rhs_ssa);
+        opt.OptimizeAssign(rhs_ssa);
+        value = irb.NewVariable(lhs_id, rhs_ssa);
     }
     else if (operator_id_ > kAssign) {
         // like 'a += 1'
@@ -166,11 +166,12 @@ SSAPtr CallAST::GenIR(IRBuilder &irb, Optimizer &opt) {
     auto cur_block = irb.GetCurrentBlock();
     // get callee
     auto callee_ssa = callee_->GenIR(irb, opt);
-    auto opt_ssa = opt.OptimizeAssign(callee_ssa);
-    auto call_ssa = std::make_shared<CallSSA>(opt_ssa ? opt_ssa : callee_ssa);
+    opt.OptimizeAssign(callee_ssa);
+    auto call_ssa = std::make_shared<CallSSA>(callee_ssa);
     // add arguments to block and call_ssa
     for (int i = 0; i < args_.size(); ++i) {
         auto arg_ssa = args_[i]->GenIR(irb, opt);
+        opt.OptimizeAssign(arg_ssa);
         auto setter = std::make_shared<ArgSetterSSA>(i, arg_ssa);
         cur_block->AddValue(setter);
         call_ssa->AddArg(setter);
