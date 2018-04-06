@@ -27,7 +27,7 @@ public:
     // NOTE: method may modify 'lhs' or 'rhs' (auto copy propagation)
     SSAPtr OptimizeBinExpr(Operator op, SSAPtr &lhs, SSAPtr &rhs, int type);
     SSAPtr OptimizeUnaExpr(Operator op, SSAPtr &operand);
-    SSAPtr OptimizeAssign(const SSAPtr &rhs);
+    bool OptimizeAssign(SSAPtr &rhs);
 
     void set_enabled(bool enabled) { enabled_ = enabled; }
     bool enabled() const { return enabled_; }

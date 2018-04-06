@@ -464,10 +464,8 @@ SSAPtr Optimizer::CopyProp(const SSAPtr &rhs) {
 SSAPtr Optimizer::OptimizeBinExpr(Operator op, SSAPtr &lhs, SSAPtr &rhs, int type) {
     if (!enabled_) return nullptr;
     // auto copy propagation
-    auto lhs_new = CopyProp(lhs);
-    auto rhs_new = CopyProp(rhs);
-    if (lhs_new) lhs = lhs_new;
-    if (rhs_new) rhs = rhs_new;
+    OptimizeAssign(lhs);
+    OptimizeAssign(rhs);
     // constant folding
     auto cf_result = ConstFold(op, lhs, rhs);
     if (cf_result) return cf_result;
@@ -481,13 +479,19 @@ SSAPtr Optimizer::OptimizeBinExpr(Operator op, SSAPtr &lhs, SSAPtr &rhs, int typ
 SSAPtr Optimizer::OptimizeUnaExpr(Operator op, SSAPtr &operand) {
     if (!enabled_) return nullptr;
     // auto copy propagation
-    auto opr_new = CopyProp(operand);
-    if (opr_new) operand = opr_new;
+    OptimizeAssign(operand);
     // constant folding
     return ConstFoldUna(op, operand);
 }
 
-SSAPtr Optimizer::OptimizeAssign(const SSAPtr &rhs) {
-    return enabled_ ? CopyProp(rhs) : nullptr;
+bool Optimizer::OptimizeAssign(SSAPtr &rhs) {
+    if (!enabled_) return false;
+    auto rhs_new = CopyProp(rhs);
+    if (rhs_new) {
+        rhs = rhs_new;
+        return true;
+    }
+    else {
+        return false;
+    }
 }
-
