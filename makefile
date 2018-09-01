@@ -19,6 +19,7 @@ saby_dir = ./src/
 def_dir = $(saby_dir)define/
 front_dir = $(saby_dir)front/
 back_dir = $(saby_dir)back/
+llvm_dir = $(saby_dir)llvm/
 util_dir = $(saby_dir)util/
 
 # define
@@ -37,11 +38,15 @@ irbuilder_targets = $(back_dir)irbuilder/irbuilder.cpp $(back_dir)irbuilder/geni
 optimizer_targets = $(back_dir)optimizer/optimizer.cpp
 back_targets = $(irbuilder_targets) $(optimizer_targets)
 
+# LLVM back-end
+
 # util
 fs_targets = $(util_dir)fs/dir.cpp
 util_targets = $(fs_targets)
 
 # output
+saby4llvm_out = $(build_dir)s4l
+
 lexer_test_targets = $(lexer_targets) $(front_dir)lexer/lexer_test.cpp
 lexer_test_out = $(build_dir)lexer
 
@@ -52,9 +57,12 @@ outs = $(lexer_test_out) $(parset_test_out)
 
 .PHONY: all saby lexer parser clean clean_dbg
 
-all: saby lexer parser
+all: saby saby4llvm lexer parser
 
 saby: parser
+
+saby4llvm: $(parser_test_targets)
+	$(CC) $(parser_test_targets) -o $(saby4llvm_out) -DLLVM_BACKEND
 
 lexer: $(lexer_test_targets)
 	$(CC) $(lexer_test_targets) -o $(lexer_test_out)
