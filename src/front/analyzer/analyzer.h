@@ -1,10 +1,10 @@
-#ifndef SABY_SEMA_H_
-#define SABY_SEMA_H_
+#ifndef SABY_FRONT_ANALYZER_ANALYZER_H_
+#define SABY_FRONT_ANALYZER_ANALYZER_H_
 
 #include <string>
 
-#include "symbol.h"
-#include "lexer.h"
+#include "../../define/symbol/symbol.h"
+#include "../lexer/lexer.h"
 
 class Analyzer {
 public:
@@ -60,4 +60,4 @@ private:
     bool has_return_;
 };
 
-#endif // SABY_SEMA_H_
+#endif // SABY_FRONT_ANALYZER_ANALYZER_H_

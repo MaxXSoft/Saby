@@ -1,5 +1,5 @@
-#ifndef SABY_LEXER_H_
-#define SABY_LEXER_H_
+#ifndef SABY_FRONT_LEXER_LEXER_H_
+#define SABY_FRONT_LEXER_LEXER_H_
 
 #include <string>
 #include <fstream>
@@ -87,4 +87,4 @@ private:
     int op_prec_;
 };
 
-#endif // SABY_LEXER_H_
+#endif // SABY_FRONT_LEXER_LEXER_H_

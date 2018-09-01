@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "type.h"
-#include "fs/dir.h"
+#include "../../define/type.h"
+#include "../../util/fs/dir.h"
 
 namespace {
 

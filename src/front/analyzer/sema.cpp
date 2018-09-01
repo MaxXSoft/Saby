@@ -1,6 +1,6 @@
 // Semantic Analysis
 
-#include "ast.h"
+#include "../../define/ast/ast.h"
 
 // TODO: should remove some extra 'env' assignment expression
 

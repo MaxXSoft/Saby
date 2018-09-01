@@ -2,12 +2,12 @@
 #include <sstream>
 #include <string>
 
-#include "lexer.h"
-#include "parser.h"
-#include "analyzer.h"
-#include "irbuilder.h"
-// #include "generator.h"
-#include "xstl/argh.h"
+#include "front/lexer/lexer.h"
+#include "front/parser/parser.h"
+#include "front/analyzer/analyzer.h"
+#include "back/irbuilder/irbuilder.h"
+// #include "back/generator/generator.h"
+#include "util/xstl/argh.h"
 
 namespace {
 

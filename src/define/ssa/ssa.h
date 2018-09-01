@@ -1,5 +1,5 @@
-#ifndef SABY_SSA_H_
-#define SABY_SSA_H_
+#ifndef SABY_DEFINE_SSA_SSA_H_
+#define SABY_DEFINE_SSA_SSA_H_
 
 #include <memory>
 #include <utility>
@@ -14,7 +14,7 @@
 #define SABY_INLINE
 #endif
 
-#include "type.h"
+#include "../type.h"
 #include "def_use.h"
 
 class ValueSSA : public Value {
@@ -356,4 +356,4 @@ inline T *SSACast(const SSAPtr &ptr) {
     return SSACast<T>(ptr.get());
 }
 
-#endif // SABY_SSA_H_
+#endif // SABY_DEFINE_SSA_SSA_H_

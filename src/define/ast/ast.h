@@ -1,14 +1,14 @@
-#ifndef SABY_AST_H_
-#define SABY_AST_H_
+#ifndef SABY_DEFINE_AST_AST_H_
+#define SABY_DEFINE_AST_AST_H_
 
 #include <string>
 #include <memory>
 #include <utility>
 #include <vector>
 
-#include "analyzer.h"
-#include "irbuilder.h"
-#include "optimizer.h"
+#include "../../front/analyzer/analyzer.h"
+#include "../../back/irbuilder/irbuilder.h"
+#include "../../back/optimizer/optimizer.h"
 
 class ExpressionAST {
 public:
@@ -244,4 +244,4 @@ private:
     LibList libs_;
 };
 
-#endif // SABY_AST_H_
+#endif // SABY_DEFINE_AST_AST_H_

@@ -1,5 +1,5 @@
-#ifndef SABY_DATA_EXPORTER_EXPORTER_H_
-#define SABY_DATA_EXPORTER_EXPORTER_H_
+#ifndef SABY_UTIL_DATA_EXPORTER_EXPORTER_H_
+#define SABY_UTIL_DATA_EXPORTER_EXPORTER_H_
 
 #include <memory>
 #include <utility>
@@ -68,4 +68,4 @@ public:
     virtual void set_version(int major, int minor, int revision) = 0;
 };
 
-#endif // SABY_DATA_EXPORTER_EXPORTER_H_
+#endif // SABY_UTIL_DATA_EXPORTER_EXPORTER_H_

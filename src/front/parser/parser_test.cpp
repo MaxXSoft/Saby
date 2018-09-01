@@ -1,11 +1,11 @@
 #include <iostream>
 
-#include "fs/dir.h"
-#include "lexer.h"
+#include "../../util/fs/dir.h"
+#include "../lexer/lexer.h"
 #include "parser.h"
-#include "analyzer.h"
-#include "irbuilder.h"
-#include "optimizer.h"
+#include "../analyzer/analyzer.h"
+#include "../../back/irbuilder/irbuilder.h"
+#include "../../back/optimizer/optimizer.h"
 
 int main(int argc, const char *argv[]) {
     std::string lib_path(argv[0]), sym_path(argv[1]);

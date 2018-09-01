@@ -1,5 +1,5 @@
-#ifndef SABY_IRBUILDER_H_
-#define SABY_IRBUILDER_H_
+#ifndef SABY_BACK_IRBUILDER_IRBUILDER_H_
+#define SABY_BACK_IRBUILDER_IRBUILDER_H_
 
 #include <vector>
 #include <map>
@@ -8,8 +8,8 @@
 #include <utility>
 #include <cassert>
 
-#include "ssa.h"
-#include "type.h"
+#include "../../define/ssa/ssa.h"
+#include "../../define/type.h"
 
 // break & continue information
 using BreakContPair = std::pair<SSAPtr, SSAPtr>;
@@ -69,4 +69,4 @@ private:
     LibList imported_libs_, exported_funcs_;
 };
 
-#endif // SABY_IRBUIDER_H_
+#endif // SABY_BACK_IRBUILDER_IRBUILDER_H_

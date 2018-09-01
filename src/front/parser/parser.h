@@ -1,8 +1,8 @@
-#ifndef SABY_PARSER_H_
-#define SABY_PARSER_H_
+#ifndef SABY_DEFINE_PARSER_PARSER_H_
+#define SABY_DEFINE_PARSER_PARSER_H_
 
-#include "lexer.h"
-#include "ast.h"
+#include "../lexer/lexer.h"
+#include "../../define/ast/ast.h"
 
 class Parser {
 public:
@@ -44,4 +44,4 @@ private:
     int cur_token_;
 };
 
-#endif // SABY_PARSER_H_
+#endif // SABY_DEFINE_PARSER_PARSER_H_

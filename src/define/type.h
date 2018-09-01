@@ -1,5 +1,5 @@
-#ifndef SABY_TYPE_H_
-#define SABY_TYPE_H_
+#ifndef SABY_DEFINE_TYPE_H_
+#define SABY_DEFINE_TYPE_H_
 
 #include <vector>
 #include <list>
@@ -28,4 +28,4 @@ constexpr TypeValue kFuncTypeBase = 131;
 using IDType = std::string;
 using BlockIDType = std::size_t;
 
-#endif // SABY_TYPE_H_
+#endif // SABY_DEFINE_TYPE_H_

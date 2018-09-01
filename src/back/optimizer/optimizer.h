@@ -1,5 +1,5 @@
-#ifndef SABY_OPTIMIZER_H_
-#define SABY_OPTIMIZER_H_
+#ifndef SABY_BACK_OPTIMIZER_OPTIMIZER_H_
+#define SABY_BACK_OPTIMIZER_OPTIMIZER_H_
 
 /*
     TODO: optimizer can do:
@@ -15,7 +15,7 @@
         *function inlining (optional)
 */
 
-#include "irbuilder.h"
+#include "../irbuilder/irbuilder.h"
 
 class Optimizer {
 public:
@@ -49,4 +49,4 @@ private:
     bool enabled_;
 };
 
-#endif // SABY_OPTIMIZER_H_
+#endif // SABY_BACK_OPTIMIZER_OPTIMIZER_H_

@@ -5,7 +5,7 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "lexer.h"
+#include "../../front/lexer/lexer.h"
 
 namespace {
 

@@ -1,5 +1,5 @@
-#ifndef SABY_DATA_EXPORTER_JSON_H_
-#define SABY_DATA_EXPORTER_JSON_H_
+#ifndef SABY_UTIL_DATA_EXPORTER_JSON_H_
+#define SABY_UTIL_DATA_EXPORTER_JSON_H_
 
 #include "exporter.h"
 
@@ -72,4 +72,4 @@ private:
     std::map<std::string, DataRefGroup> ref_groups_;
 };
 
-#endif // SABY_DATA_EXPORTER_EXPORTER_H_
+#endif // SABY_UTIL_DATA_EXPORTER_JSON_H_

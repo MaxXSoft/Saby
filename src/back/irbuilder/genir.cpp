@@ -1,10 +1,10 @@
-#include "ast.h"
+#include "../../define/ast/ast.h"
 
 #include <set>
 #include <cassert>
 
-#include "lexer.h"
-#include "type.h"
+#include "../../front/lexer/lexer.h"
+#include "../../define/type.h"
 
 namespace {
 

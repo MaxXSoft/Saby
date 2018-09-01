@@ -1,5 +1,5 @@
-#ifndef SABY_DEF_USE_H_
-#define SABY_DEF_USE_H_
+#ifndef SABY_DEFINE_SSA_DEF_USE_H_
+#define SABY_DEFINE_SSA_DEF_USE_H_
 
 // reference: LLVM version 1.3
 
@@ -80,4 +80,4 @@ private:
     std::vector<Use> operands_;
 };
 
-#endif // SABY_DEF_USE_H_
+#endif // SABY_DEFINE_SSA_DEF_USE_H_

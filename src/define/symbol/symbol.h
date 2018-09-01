@@ -1,5 +1,5 @@
-#ifndef SABY_SYMBOL_H_
-#define SABY_SYMBOL_H_
+#ifndef SABY_DEFINE_SYMBOL_SYMBOL_H_
+#define SABY_DEFINE_SYMBOL_SYMBOL_H_
 
 #include <string>
 #include <memory>
@@ -10,7 +10,7 @@
 #include <set>
 #include <cstddef>
 
-#include "type.h"
+#include "../type.h"
 
 // TODO: reimplement this class in an elegant way
 
@@ -76,4 +76,4 @@ private:
     LibListPtr loaded_libs_, exported_funcs_;
 };
 
-#endif // SABY_SYMBOL_H_
+#endif // SABY_DEFINE_SYMBOL_SYMBOL_H_
