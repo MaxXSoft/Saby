@@ -7,8 +7,13 @@
 #include <vector>
 
 #include "../../front/analyzer/analyzer.h"
+
+#ifndef LLVM_BACKEND
 #include "../../back/irbuilder/irbuilder.h"
 #include "../../back/optimizer/optimizer.h"
+#else
+#include "llvm/IR/Value.h"
+#endif
 
 class ExpressionAST {
 public:
@@ -21,7 +26,11 @@ public:
     virtual ~ExpressionAST() = default;
 
     virtual TypeValue SemaAnalyze(Analyzer &ana) = 0;
+#ifndef LLVM_BACKEND
     virtual SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) = 0;
+#else
+    virtual llvm::Value *GenIR() = 0;
+#endif
 
     ASTType type() const { return type_; }
     EnvPtr env() const { return env_; }
@@ -46,7 +55,11 @@ public:
             : ExpressionAST(ASTType::Id), id_(id), type_(type) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
     const std::string &id() const { return id_; }
 
@@ -62,7 +75,11 @@ public:
               defs_(std::move(defs)), type_(type) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     VarDefList defs_;
@@ -75,7 +92,11 @@ public:
             : ExpressionAST(ASTType::Num), value_(value) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     long long value_;
@@ -87,7 +108,11 @@ public:
             : ExpressionAST(ASTType::Dec), value_(value) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     double value_;
@@ -99,7 +124,11 @@ public:
             : ExpressionAST(ASTType::Str), str_(str) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     std::string str_;
@@ -113,7 +142,11 @@ public:
               lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     int operator_id_, operand_type_;
@@ -127,7 +160,11 @@ public:
               operator_id_(operator_id), operand_(std::move(operand)) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     int operator_id_, operand_type_;
@@ -141,7 +178,11 @@ public:
               callee_(std::move(callee)), args_(std::move(args)) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     ASTPtr callee_;
@@ -155,7 +196,11 @@ public:
             : ExpressionAST(ASTType::Block), expr_list_(std::move(expr_list)) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     ASTPtrList expr_list_;
@@ -168,7 +213,11 @@ public:
               return_type_(return_type), body_(std::move(body)) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     ASTPtrList args_;
@@ -182,7 +231,11 @@ public:
             : ExpressionAST(ASTType::Asm), asm_str_(asm_str) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     std::string asm_str_;
@@ -195,7 +248,11 @@ public:
               then_(std::move(then)), else_then_(std::move(else_then)) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     ASTPtr cond_, then_, else_then_;
@@ -208,7 +265,11 @@ public:
               cond_(std::move(cond)), body_(std::move(body)) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     ASTPtr cond_, body_;
@@ -222,7 +283,11 @@ public:
               type_(type), value_(std::move(value)) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     int type_;
@@ -237,7 +302,11 @@ public:
               type_(type), libs_(std::move(libs)) {}
 
     TypeValue SemaAnalyze(Analyzer &ana) override;
+#ifndef LLVM_BACKEND
     SSAPtr GenIR(IRBuilder &irb, Optimizer &opt) override;
+#else
+    llvm::Value *GenIR() override;
+#endif
 
 private:
     int type_;
